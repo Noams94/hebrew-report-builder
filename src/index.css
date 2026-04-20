@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #faf9f6;
+  color: #1a1a1a;
+  font-family: 'Heebo', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.report-prose p {
+  margin: 0.75em 0;
+  line-height: 1.75;
+}
+.report-prose strong {
+  font-weight: 600;
+}
+.report-prose em {
+  font-style: italic;
+}
+.report-prose a {
+  color: #1e3a5f;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.report-prose ul {
+  margin: 0.5em 0;
+  padding-inline-start: 1.5em;
+  list-style: disc;
+}
+.report-prose li {
+  margin: 0.25em 0;
+}
