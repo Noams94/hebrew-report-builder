@@ -29,6 +29,40 @@ export default function ChartBlock({ block }) {
     })
   }
 
+  if (chartType === 'imported' && block.data.importedSvg) {
+    return (
+      <div className="flex flex-col gap-2">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => updateBlock(block.id, { title: e.target.value })}
+          placeholder="כותרת לגרף"
+          className="rounded border border-subtle bg-white px-3 py-1.5 text-sm focus:outline-none"
+        />
+        <div
+          className="rounded-lg border border-subtle bg-white p-3 text-center"
+          dangerouslySetInnerHTML={{ __html: block.data.importedSvg }}
+        />
+        <div className="flex items-center justify-between gap-2 text-xs text-ink/60">
+          <span>גרף מיובא (SVG)</span>
+          <button
+            type="button"
+            onClick={() =>
+              updateBlock(block.id, {
+                chartType: 'bar',
+                importedSvg: null,
+                source: null,
+              })
+            }
+            className="rounded border border-subtle bg-white px-2 py-1 hover:bg-paper"
+          >
+            החלף בגרף חדש
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   if (!source) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-lg border-2 border-dashed border-subtle py-8 text-center">

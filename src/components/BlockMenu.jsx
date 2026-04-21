@@ -7,6 +7,10 @@ import {
   BarChart3,
   Table,
   Minus,
+  ListChecks,
+  Calculator,
+  Map as MapIcon,
+  FileText,
 } from 'lucide-react'
 import { useReportStore } from '../store/reportStore'
 
@@ -16,6 +20,10 @@ const BLOCK_TYPES = [
   { type: 'image', label: 'תמונה', Icon: ImageIcon },
   { type: 'chart', label: 'גרף', Icon: BarChart3 },
   { type: 'table', label: 'טבלה', Icon: Table },
+  { type: 'likert', label: 'Likert', Icon: ListChecks },
+  { type: 'stats', label: 'סטטיסטיקה', Icon: Calculator },
+  { type: 'map', label: 'מפה', Icon: MapIcon },
+  { type: 'cover', label: 'עמוד שער', Icon: FileText },
   { type: 'divider', label: 'מפריד', Icon: Minus },
 ]
 

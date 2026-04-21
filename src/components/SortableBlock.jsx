@@ -7,6 +7,10 @@ import ImageBlock from './blocks/ImageBlock'
 import ChartBlock from './blocks/ChartBlock'
 import TableBlock from './blocks/TableBlock'
 import DividerBlock from './blocks/DividerBlock'
+import LikertBlock from './blocks/LikertBlock'
+import StatsBlock from './blocks/StatsBlock'
+import MapBlock from './blocks/MapBlock'
+import CoverBlock from './blocks/CoverBlock'
 
 const BLOCK_COMPONENTS = {
   heading: HeadingBlock,
@@ -15,6 +19,10 @@ const BLOCK_COMPONENTS = {
   chart: ChartBlock,
   table: TableBlock,
   divider: DividerBlock,
+  likert: LikertBlock,
+  stats: StatsBlock,
+  map: MapBlock,
+  cover: CoverBlock,
 }
 
 export default function SortableBlock({ block }) {
