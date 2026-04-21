@@ -4,13 +4,15 @@ const hr = () => ({ type: 'divider', data: {} })
 
 export const TEMPLATES = [
   {
-    id: 'blank',
+    id: 'blank-he',
+    lang: 'he',
     name: 'ריק',
     description: 'דוח ריק להתחלה מאפס',
     blocks: [],
   },
   {
-    id: 'market',
+    id: 'market-he',
+    lang: 'he',
     name: 'דוח שוק',
     description: 'תקציר, מגמות, טבלת נתונים, תובנות ומסקנות',
     titleHint: 'דוח שוק',
@@ -29,7 +31,8 @@ export const TEMPLATES = [
     ],
   },
   {
-    id: 'survey',
+    id: 'survey-he',
+    lang: 'he',
     name: 'דוח סקר',
     description: 'מתודולוגיה, דמוגרפיה, תוצאות Likert, תובנות',
     titleHint: 'דוח סקר',
@@ -51,7 +54,8 @@ export const TEMPLATES = [
     ],
   },
   {
-    id: 'academic',
+    id: 'academic-he',
+    lang: 'he',
     name: 'דוח אקדמי',
     description: 'תקציר, שיטה, תוצאות, דיון, מקורות',
     titleHint: 'מחקר',
@@ -76,16 +80,89 @@ export const TEMPLATES = [
       ),
     ],
   },
+  {
+    id: 'blank-en',
+    lang: 'en',
+    name: 'Blank',
+    description: 'Empty report to start from scratch',
+    blocks: [],
+  },
+  {
+    id: 'market-en',
+    lang: 'en',
+    name: 'Market report',
+    description: 'Summary, trends, data table, insights and conclusions',
+    titleHint: 'Market report',
+    blocks: [
+      h(1, 'Executive summary'),
+      p('_Write a 3–4 paragraph summary with the main findings and recommendations._'),
+      hr(),
+      h(2, 'Background and methodology'),
+      p('Data sources, collection dates, sample size, key definitions.'),
+      h(2, 'Key trends'),
+      p('- **Trend 1:** ...\n- **Trend 2:** ...\n- **Trend 3:** ...'),
+      h(2, 'Detailed analysis'),
+      p('Add a chart or a table from the block menu.'),
+      h(2, 'Conclusions and recommendations'),
+      p('_Summarize the practical implications._'),
+    ],
+  },
+  {
+    id: 'survey-en',
+    lang: 'en',
+    name: 'Survey report',
+    description: 'Methodology, demographics, Likert results, insights',
+    titleHint: 'Survey report',
+    blocks: [
+      h(1, 'Survey background'),
+      p('**Purpose:** \n\n**Target audience:** \n\n**Collection period:** '),
+      h(2, 'Methodology'),
+      p(
+        '- Sampling method: ...\n- Instrument: structured questionnaire with X items\n- Respondents: N = ...\n- Response rate: ...%',
+      ),
+      h(2, 'Respondent profile'),
+      p('Add a table or chart with demographic breakdown (gender, age, region).'),
+      h(2, 'Key results'),
+      p('_Add a Likert block to show the distribution of responses._'),
+      h(2, 'Insights'),
+      p('- First insight\n- Second insight\n- Third insight'),
+      h(2, 'Recommendations'),
+      p('_Which actions follow from the findings?_'),
+    ],
+  },
+  {
+    id: 'academic-en',
+    lang: 'en',
+    name: 'Academic report',
+    description: 'Abstract, methods, results, discussion, references',
+    titleHint: 'Research',
+    blocks: [
+      h(1, 'Abstract'),
+      p('_Up to 250 words: background, research question, method, key findings, conclusion._'),
+      h(2, 'Introduction'),
+      p('Present the problem and research question. Brief literature review.'),
+      h(2, 'Methods'),
+      p('**Participants:** \n\n**Instruments:** \n\n**Procedure:** \n\n**Statistical analysis:** '),
+      h(2, 'Results'),
+      p('_Embed tables, charts, and statistical summaries here._'),
+      h(2, 'Discussion'),
+      p('Interpret the findings in light of the literature, limitations, and directions for future work.'),
+      h(2, 'References'),
+      p('- Author (Year). *Article title*. Journal, Volume(Issue), pages.\n- ...'),
+    ],
+  },
 ]
 
 export function getTemplate(id) {
   return TEMPLATES.find((t) => t.id === id) || TEMPLATES[0]
 }
 
-export function instantiateTemplate(id) {
+export function instantiateTemplate(id, lang = 'he') {
   const template = getTemplate(id)
+  const fallbackTitle = lang === 'en' ? 'New report' : 'דוח חדש'
   return {
-    title: template.titleHint || 'דוח חדש',
+    title: template.titleHint || fallbackTitle,
+    lang: template.lang || lang,
     blocks: template.blocks.map((b) => ({
       type: b.type,
       data: structuredClone(b.data),

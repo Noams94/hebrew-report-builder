@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Plus,
   Type,
+  AlignLeft,
   AlignRight,
   Image as ImageIcon,
   BarChart3,
@@ -13,24 +14,28 @@ import {
   FileText,
 } from 'lucide-react'
 import { useReportStore } from '../store/reportStore'
-
-const BLOCK_TYPES = [
-  { type: 'heading', label: 'כותרת', Icon: Type },
-  { type: 'text', label: 'טקסט', Icon: AlignRight },
-  { type: 'image', label: 'תמונה', Icon: ImageIcon },
-  { type: 'chart', label: 'גרף', Icon: BarChart3 },
-  { type: 'table', label: 'טבלה', Icon: Table },
-  { type: 'likert', label: 'Likert', Icon: ListChecks },
-  { type: 'stats', label: 'סטטיסטיקה', Icon: Calculator },
-  { type: 'map', label: 'מפה', Icon: MapIcon },
-  { type: 'cover', label: 'עמוד שער', Icon: FileText },
-  { type: 'divider', label: 'מפריד', Icon: Minus },
-]
+import { useT, useDir } from '../i18n'
 
 export default function BlockMenu({ afterId = null, large = false }) {
   const addBlock = useReportStore((s) => s.addBlock)
+  const t = useT()
+  const dir = useDir()
+  const TextAlignIcon = dir === 'rtl' ? AlignRight : AlignLeft
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
+
+  const BLOCK_TYPES = [
+    { type: 'heading', label: t.blockMenu.heading, Icon: Type },
+    { type: 'text', label: t.blockMenu.text, Icon: TextAlignIcon },
+    { type: 'image', label: t.blockMenu.image, Icon: ImageIcon },
+    { type: 'chart', label: t.blockMenu.chart, Icon: BarChart3 },
+    { type: 'table', label: t.blockMenu.table, Icon: Table },
+    { type: 'likert', label: t.blockMenu.likert, Icon: ListChecks },
+    { type: 'stats', label: t.blockMenu.stats, Icon: Calculator },
+    { type: 'map', label: t.blockMenu.map, Icon: MapIcon },
+    { type: 'cover', label: t.blockMenu.cover, Icon: FileText },
+    { type: 'divider', label: t.blockMenu.divider, Icon: Minus },
+  ]
 
   useEffect(() => {
     if (!open) return
@@ -58,19 +63,17 @@ export default function BlockMenu({ afterId = null, large = false }) {
             className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-subtle bg-white/50 px-10 py-8 text-ink/70 transition hover:border-accent hover:text-accent"
           >
             <Plus size={28} />
-            <span className="text-base font-medium">
-              התחל לכתוב — בחר סוג בלוק
-            </span>
+            <span className="text-base font-medium">{t.blockMenu.start}</span>
           </button>
         ) : (
           <button
             type="button"
             onClick={() => setOpen(true)}
-            aria-label="הוסף בלוק"
+            aria-label={t.blockMenu.addAria}
             className="flex h-7 items-center gap-1 rounded-full border border-subtle bg-white px-3 text-xs text-ink/50 transition hover:border-accent hover:text-accent"
           >
             <Plus size={14} />
-            <span>הוסף בלוק</span>
+            <span>{t.blockMenu.add}</span>
           </button>
         ))}
 

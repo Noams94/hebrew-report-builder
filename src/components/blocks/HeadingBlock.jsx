@@ -1,4 +1,5 @@
 import { useReportStore } from '../../store/reportStore'
+import { useT } from '../../i18n'
 
 const SIZE_BY_LEVEL = {
   1: 'text-3xl font-bold',
@@ -8,6 +9,7 @@ const SIZE_BY_LEVEL = {
 
 export default function HeadingBlock({ block }) {
   const updateBlock = useReportStore((s) => s.updateBlock)
+  const t = useT()
   const { level = 2, text = '' } = block.data
 
   return (
@@ -15,7 +17,7 @@ export default function HeadingBlock({ block }) {
       <select
         value={level}
         onChange={(e) => updateBlock(block.id, { level: Number(e.target.value) })}
-        aria-label="רמת כותרת"
+        aria-label={t.blocks.heading.placeholder}
         className="rounded border border-subtle bg-white px-2 py-1 text-xs text-ink/70"
       >
         <option value={1}>H1</option>
@@ -26,7 +28,7 @@ export default function HeadingBlock({ block }) {
         type="text"
         value={text}
         onChange={(e) => updateBlock(block.id, { text: e.target.value })}
-        placeholder="כותרת..."
+        placeholder={`${t.blocks.heading.placeholder}...`}
         className={`flex-1 bg-transparent text-ink placeholder:text-ink/30 focus:outline-none ${SIZE_BY_LEVEL[level]}`}
       />
     </div>

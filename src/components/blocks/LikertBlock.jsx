@@ -11,17 +11,35 @@ import {
 import { Upload, Trash2, Plus, BarChart3 } from 'lucide-react'
 import { useReportStore } from '../../store/reportStore'
 import { parseExcel } from '../../lib/excel'
+import { useLang, isRtl } from '../../i18n'
 
-const LABELS_5 = ['לא מסכים בכלל', 'לא מסכים', 'ניטרלי', 'מסכים', 'מסכים בהחלט']
-const LABELS_7 = [
-  'לא מסכים בכלל',
-  'לא מסכים',
-  'די לא מסכים',
-  'ניטרלי',
-  'די מסכים',
-  'מסכים',
-  'מסכים בהחלט',
-]
+const LABELS_BY_LANG = {
+  he: {
+    5: ['לא מסכים בכלל', 'לא מסכים', 'ניטרלי', 'מסכים', 'מסכים בהחלט'],
+    7: [
+      'לא מסכים בכלל',
+      'לא מסכים',
+      'די לא מסכים',
+      'ניטרלי',
+      'די מסכים',
+      'מסכים',
+      'מסכים בהחלט',
+    ],
+  },
+  en: {
+    5: ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree'],
+    7: [
+      'Strongly disagree',
+      'Disagree',
+      'Somewhat disagree',
+      'Neutral',
+      'Somewhat agree',
+      'Agree',
+      'Strongly agree',
+    ],
+  },
+}
+
 const COLORS_5 = ['#b91c1c', '#f87171', '#9ca3af', '#4ade80', '#15803d']
 const COLORS_7 = [
   '#7f1d1d',
@@ -33,10 +51,42 @@ const COLORS_7 = [
   '#14532d',
 ]
 
-const getConfig = (scale) =>
-  scale === 7
-    ? { labels: LABELS_7, colors: COLORS_7 }
-    : { labels: LABELS_5, colors: COLORS_5 }
+const EXTRA = {
+  he: {
+    title: 'סקר Likert',
+    scale: 'סולם:',
+    scale5: '5 נקודות',
+    scale7: '7 נקודות',
+    importExcel: 'ייבוא Excel',
+    importHint: (n) => `(שורה לשאלה: עמודה 1 טקסט, עמודות 2..${n + 1} ספירות)`,
+    question: 'שאלה',
+    empty: 'אין שאלות. הוסף שאלה או ייבא Excel.',
+    deleteQ: 'מחק שאלה',
+    addQ: 'הוסף שאלה',
+    titlePh: 'כותרת הגרף (אופציונלי)',
+    questionN: (i) => `שאלה ${i}`,
+  },
+  en: {
+    title: 'Likert survey',
+    scale: 'Scale:',
+    scale5: '5 points',
+    scale7: '7 points',
+    importExcel: 'Import Excel',
+    importHint: (n) => `(One row per question: col 1 = text, cols 2..${n + 1} = counts)`,
+    question: 'Question',
+    empty: 'No questions. Add one or import Excel.',
+    deleteQ: 'Delete question',
+    addQ: 'Add question',
+    titlePh: 'Chart title (optional)',
+    questionN: (i) => `Question ${i}`,
+  },
+}
+
+const getConfig = (scale, lang) => {
+  const labels = (LABELS_BY_LANG[lang] || LABELS_BY_LANG.he)[scale === 7 ? 7 : 5]
+  const colors = scale === 7 ? COLORS_7 : COLORS_5
+  return { labels, colors }
+}
 
 const emptyQuestion = (scale) => ({
   text: '',
@@ -45,9 +95,12 @@ const emptyQuestion = (scale) => ({
 
 export default function LikertBlock({ block }) {
   const updateBlock = useReportStore((s) => s.updateBlock)
+  const lang = useLang()
+  const L = EXTRA[lang] || EXTRA.he
   const fileInputRef = useRef(null)
   const { scale = 5, questions = [], title = '' } = block.data
-  const { labels, colors } = getConfig(scale)
+  const { labels, colors } = getConfig(scale, lang)
+  const cellAlign = isRtl(lang) ? 'text-right' : 'text-left'
 
   const setScale = (next) => {
     updateBlock(block.id, {
@@ -104,7 +157,7 @@ export default function LikertBlock({ block }) {
   }
 
   const chartData = questions.map((q, i) => {
-    const row = { question: q.text || `שאלה ${i + 1}` }
+    const row = { question: q.text || L.questionN(i + 1) }
     labels.forEach((label, j) => {
       row[label] = q.responses[j] ?? 0
     })
@@ -119,16 +172,16 @@ export default function LikertBlock({ block }) {
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-subtle bg-white p-3 text-xs">
         <BarChart3 size={14} className="text-ink/50" />
-        <span className="font-medium">סקר Likert</span>
+        <span className="font-medium">{L.title}</span>
         <label className="flex items-center gap-1">
-          סולם:
+          {L.scale}
           <select
             value={scale}
             onChange={(e) => setScale(Number(e.target.value))}
             className="rounded border border-subtle px-2 py-1"
           >
-            <option value={5}>5 נקודות</option>
-            <option value={7}>7 נקודות</option>
+            <option value={5}>{L.scale5}</option>
+            <option value={7}>{L.scale7}</option>
           </select>
         </label>
         <button
@@ -137,7 +190,7 @@ export default function LikertBlock({ block }) {
           className="flex items-center gap-1 rounded border border-subtle px-2 py-1 hover:bg-paper"
         >
           <Upload size={12} />
-          ייבוא Excel
+          {L.importExcel}
         </button>
         <input
           ref={fileInputRef}
@@ -146,16 +199,14 @@ export default function LikertBlock({ block }) {
           onChange={handleExcelImport}
           className="hidden"
         />
-        <span className="text-ink/50">
-          (שורה לשאלה: עמודה 1 טקסט, עמודות 2..{scale + 1} ספירות)
-        </span>
+        <span className="text-ink/50">{L.importHint(scale)}</span>
       </div>
 
       <input
         type="text"
         value={title}
         onChange={(e) => updateBlock(block.id, { title: e.target.value })}
-        placeholder="כותרת הגרף (אופציונלי)"
+        placeholder={L.titlePh}
         className="rounded border border-subtle bg-white px-3 py-1.5 text-sm focus:outline-none"
       />
 
@@ -163,7 +214,7 @@ export default function LikertBlock({ block }) {
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-subtle bg-paper/60">
-              <th className="p-2 text-right font-medium">שאלה</th>
+              <th className={`p-2 ${cellAlign} font-medium`}>{L.question}</th>
               {labels.map((l) => (
                 <th key={l} className="p-2 text-center font-medium">
                   {l}
@@ -179,7 +230,7 @@ export default function LikertBlock({ block }) {
                   colSpan={scale + 2}
                   className="p-4 text-center text-ink/40"
                 >
-                  אין שאלות. הוסף שאלה או ייבא Excel.
+                  {L.empty}
                 </td>
               </tr>
             )}
@@ -190,7 +241,7 @@ export default function LikertBlock({ block }) {
                     type="text"
                     value={q.text}
                     onChange={(e) => updateQuestion(i, { text: e.target.value })}
-                    placeholder={`שאלה ${i + 1}`}
+                    placeholder={L.questionN(i + 1)}
                     className="w-full rounded bg-transparent px-2 py-1 focus:bg-paper focus:outline-none"
                   />
                 </td>
@@ -209,7 +260,7 @@ export default function LikertBlock({ block }) {
                   <button
                     type="button"
                     onClick={() => removeQuestion(i)}
-                    aria-label="מחק שאלה"
+                    aria-label={L.deleteQ}
                     className="rounded p-1 text-ink/40 hover:bg-red-50 hover:text-red-600"
                   >
                     <Trash2 size={12} />
@@ -225,7 +276,7 @@ export default function LikertBlock({ block }) {
             onClick={addQuestion}
             className="flex items-center gap-1 rounded border border-subtle px-3 py-1 text-xs text-ink/70 hover:bg-paper"
           >
-            <Plus size={12} /> הוסף שאלה
+            <Plus size={12} /> {L.addQ}
           </button>
         </div>
       </div>
@@ -237,6 +288,7 @@ export default function LikertBlock({ block }) {
             data={chartData}
             labels={labels}
             colors={colors}
+            lang={lang}
           />
         </div>
       )}
@@ -244,8 +296,9 @@ export default function LikertBlock({ block }) {
   )
 }
 
-export function LikertChart({ title, data, labels, colors, height = null }) {
+export function LikertChart({ title, data, labels, colors, height = null, lang = 'he' }) {
   const h = height ?? Math.max(180, data.length * 48 + 80)
+  const rtl = isRtl(lang)
   return (
     <div className="flex flex-col gap-2">
       {title && (
@@ -260,12 +313,13 @@ export function LikertChart({ title, data, labels, colors, height = null }) {
             layout="vertical"
             margin={{ top: 10, right: 20, left: 60, bottom: 10 }}
           >
-            <XAxis type="number" fontSize={11} />
+            <XAxis type="number" fontSize={11} reversed={rtl} />
             <YAxis
               type="category"
               dataKey="question"
               fontSize={11}
               width={140}
+              orientation={rtl ? 'right' : 'left'}
             />
             <Tooltip />
             <Legend />

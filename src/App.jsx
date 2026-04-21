@@ -6,10 +6,21 @@ import Preview from './components/Preview'
 import ReportLibrary from './components/ReportLibrary'
 import { useReportStore } from './store/reportStore'
 import { initHistoryTracking } from './store/historyStore'
+import { useLang, useDir, useT } from './i18n'
 
 export default function App() {
   useEffect(() => initHistoryTracking(), [])
   const view = useReportStore((s) => s.view)
+  const lang = useLang()
+  const dir = useDir()
+  const t = useT()
+
+  useEffect(() => {
+    const root = document.documentElement
+    root.setAttribute('lang', lang)
+    root.setAttribute('dir', dir)
+    document.title = t.app.name
+  }, [lang, dir, t])
 
   return (
     <div className="flex h-full flex-col bg-paper text-ink">

@@ -2,9 +2,38 @@ import { useRef } from 'react'
 import { FileSpreadsheet, Plus, X } from 'lucide-react'
 import { useReportStore } from '../../store/reportStore'
 import { parseExcel } from '../../lib/excel'
+import { useLang, isRtl } from '../../i18n'
+
+const EXTRA = {
+  he: {
+    emptyTitle: 'טבלה ריקה — ייבא מ-Excel או הוסף עמודה/שורה',
+    importExcel: 'ייבא מ-Excel',
+    addCol: 'הוסף עמודה',
+    addRow: 'הוסף שורה',
+    colName: (n) => `עמודה ${n}`,
+    removeCol: 'הסר עמודה',
+    removeRow: 'הסר שורה',
+    col: 'עמודה',
+    row: 'שורה',
+  },
+  en: {
+    emptyTitle: 'Empty table — import from Excel or add a column/row',
+    importExcel: 'Import from Excel',
+    addCol: 'Add column',
+    addRow: 'Add row',
+    colName: (n) => `Column ${n}`,
+    removeCol: 'Remove column',
+    removeRow: 'Remove row',
+    col: 'Column',
+    row: 'Row',
+  },
+}
 
 export default function TableBlock({ block }) {
   const updateBlock = useReportStore((s) => s.updateBlock)
+  const lang = useLang()
+  const L = EXTRA[lang] || EXTRA.he
+  const thAlign = isRtl(lang) ? 'text-right' : 'text-left'
   const fileInputRef = useRef(null)
   const { headers = [], rows = [] } = block.data
 
@@ -19,14 +48,14 @@ export default function TableBlock({ block }) {
   }
 
   const addColumn = () => {
-    const newHeaders = [...headers, `עמודה ${headers.length + 1}`]
+    const newHeaders = [...headers, L.colName(headers.length + 1)]
     const newRows = rows.map((r) => [...r, ''])
     updateBlock(block.id, { headers: newHeaders, rows: newRows })
   }
 
   const addRow = () => {
     const newRow = headers.length ? headers.map(() => '') : ['']
-    const nextHeaders = headers.length ? headers : ['עמודה 1']
+    const nextHeaders = headers.length ? headers : [L.colName(1)]
     updateBlock(block.id, { headers: nextHeaders, rows: [...rows, newRow] })
   }
 
@@ -56,28 +85,28 @@ export default function TableBlock({ block }) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-lg border-2 border-dashed border-subtle py-8 text-center">
         <FileSpreadsheet size={32} strokeWidth={1.5} className="text-ink/40" />
-        <p className="text-sm text-ink/60">טבלה ריקה — ייבא מ-Excel או הוסף עמודה/שורה</p>
+        <p className="text-sm text-ink/60">{L.emptyTitle}</p>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="rounded-md border border-subtle bg-white px-3 py-1.5 text-xs text-ink/80 hover:bg-paper"
           >
-            ייבא מ-Excel
+            {L.importExcel}
           </button>
           <button
             type="button"
             onClick={addColumn}
             className="rounded-md border border-subtle bg-white px-3 py-1.5 text-xs text-ink/80 hover:bg-paper"
           >
-            הוסף עמודה
+            {L.addCol}
           </button>
           <button
             type="button"
             onClick={addRow}
             className="rounded-md border border-subtle bg-white px-3 py-1.5 text-xs text-ink/80 hover:bg-paper"
           >
-            הוסף שורה
+            {L.addRow}
           </button>
         </div>
         <input
@@ -98,7 +127,7 @@ export default function TableBlock({ block }) {
           <thead className="bg-paper">
             <tr>
               {headers.map((header, i) => (
-                <th key={i} className="border-b border-subtle p-2 text-right">
+                <th key={i} className={`border-b border-subtle p-2 ${thAlign}`}>
                   <div className="flex items-center gap-1">
                     <input
                       type="text"
@@ -108,7 +137,7 @@ export default function TableBlock({ block }) {
                     />
                     <button
                       type="button"
-                      aria-label="הסר עמודה"
+                      aria-label={L.removeCol}
                       onClick={() => removeColumn(i)}
                       className="text-ink/30 hover:text-red-600"
                     >
@@ -135,7 +164,7 @@ export default function TableBlock({ block }) {
                 <td className="p-2">
                   <button
                     type="button"
-                    aria-label="הסר שורה"
+                    aria-label={L.removeRow}
                     onClick={() => removeRow(rowIndex)}
                     className="text-ink/20 opacity-0 hover:text-red-600 group-hover/row:opacity-100"
                   >
@@ -154,7 +183,7 @@ export default function TableBlock({ block }) {
           className="flex items-center gap-1 rounded border border-subtle bg-white px-2 py-1 text-xs text-ink/70 hover:bg-paper"
         >
           <Plus size={12} />
-          עמודה
+          {L.col}
         </button>
         <button
           type="button"
@@ -162,14 +191,14 @@ export default function TableBlock({ block }) {
           className="flex items-center gap-1 rounded border border-subtle bg-white px-2 py-1 text-xs text-ink/70 hover:bg-paper"
         >
           <Plus size={12} />
-          שורה
+          {L.row}
         </button>
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           className="rounded border border-subtle bg-white px-2 py-1 text-xs text-ink/70 hover:bg-paper"
         >
-          ייבא מ-Excel
+          {L.importExcel}
         </button>
         <input
           ref={fileInputRef}

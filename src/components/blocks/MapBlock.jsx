@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   MapContainer,
   TileLayer,
@@ -11,11 +11,51 @@ import 'leaflet/dist/leaflet.css'
 import { Upload, Trash2, Plus, Map as MapIcon, Crosshair } from 'lucide-react'
 import { useReportStore } from '../../store/reportStore'
 import { parseExcel } from '../../lib/excel'
+import { useLang, isRtl } from '../../i18n'
 
 const DEFAULT_CENTER = [31.5, 34.8]
 const DEFAULT_ZOOM = 8
 const LOW = [240, 245, 250]
 const HIGH = [30, 58, 95]
+
+const EXTRA = {
+  he: {
+    title: 'מפה אינטראקטיבית',
+    colorByValue: 'צבוע לפי ערך',
+    clickToAdd: 'לחיצה להוספת נקודה',
+    importExcel: 'ייבוא Excel',
+    importHint: '(עמודות: label/lat/lng/value)',
+    titlePh: 'כותרת המפה',
+    label: 'תווית',
+    value: 'ערך',
+    remove: 'מחק',
+    empty: 'אין נקודות. הוסף ידנית, ייבא מ-Excel, או סמן "לחיצה להוספה" ולחץ על המפה.',
+    noColumns: 'לא נמצאו עמודות lat/lng בקובץ',
+    labelPh: 'תווית',
+    valuePh: 'ערך',
+    add: 'הוסף',
+    current: 'מיקום נוכחי:',
+    point: 'נקודה',
+  },
+  en: {
+    title: 'Interactive map',
+    colorByValue: 'Color by value',
+    clickToAdd: 'Click to add point',
+    importExcel: 'Import Excel',
+    importHint: '(columns: label/lat/lng/value)',
+    titlePh: 'Map title',
+    label: 'Label',
+    value: 'Value',
+    remove: 'Delete',
+    empty: 'No points. Add manually, import Excel, or enable "click to add" and click the map.',
+    noColumns: 'No lat/lng columns found in file',
+    labelPh: 'Label',
+    valuePh: 'Value',
+    add: 'Add',
+    current: 'Current view:',
+    point: 'Point',
+  },
+}
 
 function interpolate(t) {
   const lerp = (a, b, t) => Math.round(a + (b - a) * t)
@@ -48,16 +88,20 @@ function ViewportSync({ onChange }) {
 function FitOnce({ points }) {
   const map = useMap()
   const didFit = useRef(false)
-  if (!didFit.current && points.length > 1) {
+  useEffect(() => {
+    if (didFit.current || points.length <= 1) return
     didFit.current = true
     const bounds = points.map((p) => [p.lat, p.lng])
     map.fitBounds(bounds, { padding: [30, 30] })
-  }
+  }, [map, points])
   return null
 }
 
 export default function MapBlock({ block }) {
   const updateBlock = useReportStore((s) => s.updateBlock)
+  const lang = useLang()
+  const L = EXTRA[lang] || EXTRA.he
+  const rtl = isRtl(lang)
   const fileInputRef = useRef(null)
   const {
     title = '',
@@ -122,7 +166,7 @@ export default function MapBlock({ block }) {
       /value|score|ערך|ציון/i.test(h),
     )
     if (latIdx === -1 || lngIdx === -1) {
-      alert('לא נמצאו עמודות lat/lng בקובץ')
+      alert(L.noColumns)
       return
     }
     const newPoints = sheet.rows
@@ -143,7 +187,7 @@ export default function MapBlock({ block }) {
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-subtle bg-white p-3 text-xs">
         <MapIcon size={14} className="text-ink/50" />
-        <span className="font-medium">מפה אינטראקטיבית</span>
+        <span className="font-medium">{L.title}</span>
         <label className="flex items-center gap-1">
           <input
             type="checkbox"
@@ -152,7 +196,7 @@ export default function MapBlock({ block }) {
               updateBlock(block.id, { colorByValue: e.target.checked })
             }
           />
-          צבוע לפי ערך
+          {L.colorByValue}
         </label>
         <label className="flex items-center gap-1">
           <input
@@ -162,7 +206,7 @@ export default function MapBlock({ block }) {
               updateBlock(block.id, { clickToAdd: e.target.checked })
             }
           />
-          לחיצה להוספת נקודה
+          {L.clickToAdd}
         </label>
         <button
           type="button"
@@ -170,7 +214,7 @@ export default function MapBlock({ block }) {
           className="flex items-center gap-1 rounded border border-subtle px-2 py-1 hover:bg-paper"
         >
           <Upload size={12} />
-          ייבוא Excel
+          {L.importExcel}
         </button>
         <input
           ref={fileInputRef}
@@ -179,14 +223,14 @@ export default function MapBlock({ block }) {
           onChange={handleExcel}
           className="hidden"
         />
-        <span className="text-ink/50">(עמודות: label/lat/lng/value)</span>
+        <span className="text-ink/50">{L.importHint}</span>
       </div>
 
       <input
         type="text"
         value={title}
         onChange={(e) => updateBlock(block.id, { title: e.target.value })}
-        placeholder="כותרת המפה"
+        placeholder={L.titlePh}
         className="rounded border border-subtle bg-white px-3 py-1.5 text-sm focus:outline-none"
       />
 
@@ -224,9 +268,18 @@ export default function MapBlock({ block }) {
                 }}
               >
                 <Popup>
-                  <div style={{ direction: 'rtl', textAlign: 'right' }}>
-                    <strong>{p.label || 'נקודה'}</strong>
-                    {hasVal && <div>ערך: {p.value}</div>}
+                  <div
+                    style={{
+                      direction: rtl ? 'rtl' : 'ltr',
+                      textAlign: rtl ? 'right' : 'left',
+                    }}
+                  >
+                    <strong>{p.label || L.point}</strong>
+                    {hasVal && (
+                      <div>
+                        {L.value}: {p.value}
+                      </div>
+                    )}
                     <div style={{ fontSize: 11, color: '#666' }}>
                       {p.lat.toFixed(4)}, {p.lng.toFixed(4)}
                     </div>
@@ -240,10 +293,10 @@ export default function MapBlock({ block }) {
 
       <div className="rounded-lg border border-subtle bg-white">
         <div className="grid grid-cols-[1fr_80px_80px_70px_40px] gap-2 border-b border-subtle bg-paper/60 p-2 text-xs font-medium">
-          <span>תווית</span>
+          <span>{L.label}</span>
           <span>lat</span>
           <span>lng</span>
-          <span>ערך</span>
+          <span>{L.value}</span>
           <span></span>
         </div>
         <div className="max-h-40 overflow-y-auto">
@@ -261,7 +314,7 @@ export default function MapBlock({ block }) {
               <button
                 type="button"
                 onClick={() => removePoint(p.id)}
-                aria-label="מחק"
+                aria-label={L.remove}
                 className="rounded p-1 text-ink/40 hover:bg-red-50 hover:text-red-600"
               >
                 <Trash2 size={12} />
@@ -269,9 +322,7 @@ export default function MapBlock({ block }) {
             </div>
           ))}
           {points.length === 0 && (
-            <div className="p-3 text-center text-xs text-ink/40">
-              אין נקודות. הוסף ידנית, ייבא מ-Excel, או סמן "לחיצה להוספה" ולחץ על המפה.
-            </div>
+            <div className="p-3 text-center text-xs text-ink/40">{L.empty}</div>
           )}
         </div>
         <div className="grid grid-cols-[1fr_80px_80px_70px_40px] items-center gap-2 border-t border-subtle p-2 text-xs">
@@ -279,7 +330,7 @@ export default function MapBlock({ block }) {
             type="text"
             value={draft.label}
             onChange={(e) => setDraft({ ...draft, label: e.target.value })}
-            placeholder="תווית"
+            placeholder={L.labelPh}
             className="rounded border border-subtle px-2 py-1 focus:outline-none"
           />
           <input
@@ -304,7 +355,7 @@ export default function MapBlock({ block }) {
             type="number"
             value={draft.value}
             onChange={(e) => setDraft({ ...draft, value: e.target.value })}
-            placeholder="ערך"
+            placeholder={L.valuePh}
             dir="ltr"
             className="rounded border border-subtle px-1 py-1 font-mono focus:outline-none"
           />
@@ -312,7 +363,7 @@ export default function MapBlock({ block }) {
             type="button"
             onClick={handleAddDraft}
             disabled={!draft.lat || !draft.lng}
-            aria-label="הוסף"
+            aria-label={L.add}
             className="rounded border border-subtle p-1 text-accent hover:bg-paper disabled:opacity-30"
           >
             <Plus size={14} />
@@ -322,7 +373,7 @@ export default function MapBlock({ block }) {
 
       <div className="flex items-center gap-2 text-xs text-ink/50">
         <Crosshair size={12} />
-        מיקום נוכחי: {center[0].toFixed(3)}, {center[1].toFixed(3)} @ zoom {zoom}
+        {L.current} {center[0].toFixed(3)}, {center[1].toFixed(3)} @ zoom {zoom}
       </div>
     </div>
   )

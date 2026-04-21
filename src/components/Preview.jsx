@@ -8,8 +8,16 @@ import { StatsGrid } from './blocks/StatsBlock'
 import { CoverPreview } from './blocks/CoverBlock'
 import { computeStats } from '../lib/stats'
 import MapPreview from './MapPreview'
+import { useT, useLang, useDir, isRtl } from '../i18n'
 
-function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '' }) {
+function defaultHeadingFont(lang) {
+  return lang === 'en' ? 'Merriweather' : 'Frank Ruhl Libre'
+}
+function defaultBodyFont(lang) {
+  return lang === 'en' ? 'Inter' : 'Heebo'
+}
+
+function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '', t, lang }) {
   const { type, data } = block
 
   if (type === 'heading') {
@@ -27,10 +35,10 @@ function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '' }) {
         id={id}
         className={`font-bold text-ink ${sizeClass}`}
         style={{
-          fontFamily: `'${theme.headingFont || 'Frank Ruhl Libre'}', serif`,
+          fontFamily: `'${theme.headingFont || defaultHeadingFont(lang)}', serif`,
         }}
       >
-        {text || <span className="text-ink/30">כותרת ריקה</span>}
+        {text || <span className="text-ink/30">{t.common.emptyHeading}</span>}
       </Tag>
     )
   }
@@ -38,7 +46,7 @@ function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '' }) {
   if (type === 'text') {
     const html = parseMarkdown(data.markdown ?? '')
     if (!html) {
-      return <p className="my-3 text-ink/30">פסקה ריקה</p>
+      return <p className="my-3 text-ink/30">{t.preview.emptyParagraph}</p>
     }
     return (
       <div
@@ -51,13 +59,13 @@ function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '' }) {
   if (type === 'image') {
     const { src, caption, alt } = data
     if (!src) {
-      return <div className="my-4 text-sm text-ink/40">[תמונה לא הוטענה]</div>
+      return <div className="my-4 text-sm text-ink/40">{t.preview.emptyImage}</div>
     }
     return (
       <figure className="my-5">
         <img
           src={src}
-          alt={alt || caption || 'תמונה בדוח'}
+          alt={alt || caption || t.common.imageAlt}
           className="mx-auto max-h-[480px] w-auto rounded"
         />
         {caption && (
@@ -89,7 +97,7 @@ function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '' }) {
     if (!source || !sheet || !xColumn || !yColumns?.length) {
       return (
         <div className="my-4 rounded border border-dashed border-subtle p-4 text-sm text-ink/40">
-          [הגדר את הגרף בעורך]
+          {t.preview.emptyChart}
         </div>
       )
     }
@@ -120,15 +128,16 @@ function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '' }) {
   if (type === 'table') {
     const { headers = [], rows = [] } = data
     if (headers.length === 0) {
-      return <div className="my-4 text-sm text-ink/40">[טבלה ריקה]</div>
+      return <div className="my-4 text-sm text-ink/40">{t.preview.emptyTable}</div>
     }
+    const thAlign = isRtl(lang) ? 'text-right' : 'text-left'
     return (
       <div className="my-5 overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b-2 border-ink/80 bg-paper/60">
               {headers.map((h, i) => (
-                <th key={i} className="p-3 text-right font-semibold">
+                <th key={i} className={`p-3 font-semibold ${thAlign}`}>
                   {h}
                 </th>
               ))}
@@ -156,16 +165,8 @@ function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '' }) {
 
   if (type === 'likert') {
     const { scale = 5, questions = [], title } = data
-    const labels5 = ['לא מסכים בכלל', 'לא מסכים', 'ניטרלי', 'מסכים', 'מסכים בהחלט']
-    const labels7 = [
-      'לא מסכים בכלל',
-      'לא מסכים',
-      'די לא מסכים',
-      'ניטרלי',
-      'די מסכים',
-      'מסכים',
-      'מסכים בהחלט',
-    ]
+    const labels5 = t.blocks.likert.labels5
+    const labels7 = t.blocks.likert.labels7
     const colors5 = ['#b91c1c', '#f87171', '#9ca3af', '#4ade80', '#15803d']
     const colors7 = [
       '#7f1d1d',
@@ -182,12 +183,12 @@ function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '' }) {
     if (!hasData) {
       return (
         <div className="my-4 rounded border border-dashed border-subtle p-4 text-sm text-ink/40">
-          [בלוק Likert — מלא נתונים בעורך]
+          {t.preview.emptyLikert}
         </div>
       )
     }
     const chartData = questions.map((q, i) => {
-      const row = { question: q.text || `שאלה ${i + 1}` }
+      const row = { question: q.text || t.preview.question(i + 1) }
       labels.forEach((label, j) => {
         row[label] = q.responses[j] ?? 0
       })
@@ -200,6 +201,7 @@ function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '' }) {
           data={chartData}
           labels={labels}
           colors={colors}
+          lang={lang}
         />
       </div>
     )
@@ -216,7 +218,7 @@ function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '' }) {
     if (!source || !sheet || !column) {
       return (
         <div className="my-4 rounded border border-dashed border-subtle p-4 text-sm text-ink/40">
-          [בלוק סטטיסטיקה — הגדר מקור בעורך]
+          {t.preview.emptyStats}
         </div>
       )
     }
@@ -226,7 +228,7 @@ function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '' }) {
     if (colIndex === -1) return null
     const values = sheetData.rows.map((r) => r[colIndex])
     const stats = computeStats(values, metrics)
-    return <StatsGrid title={title} stats={stats} metrics={metrics} />
+    return <StatsGrid title={title} stats={stats} metrics={metrics} lang={lang} />
   }
 
   if (type === 'cover') {
@@ -249,12 +251,13 @@ function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '' }) {
         date={date}
         logo={displayLogo}
         theme={theme}
+        lang={lang}
       />
     )
   }
 
   if (type === 'map') {
-    return <MapPreview data={data} />
+    return <MapPreview data={data} lang={lang} />
   }
 
   return null
@@ -264,6 +267,9 @@ export default function Preview() {
   const title = useReportStore((s) => s.title)
   const blocks = useReportStore((s) => s.blocks)
   const theme = useReportStore((s) => s.theme) || {}
+  const t = useT()
+  const lang = useLang()
+  const dir = useDir()
 
   const headingIdsById = useMemo(() => {
     const map = {}
@@ -284,31 +290,32 @@ export default function Preview() {
         .filter((b) => b.type === 'heading')
         .map((b) => ({
           id: headingIdsById[b.id],
-          text: b.data.text || 'כותרת ריקה',
+          text: b.data.text || t.common.emptyHeading,
           level: b.data.level ?? 2,
         })),
-    [blocks, headingIdsById],
+    [blocks, headingIdsById, t],
   )
 
   const showTOC = headings.length >= 3
 
   return (
     <section
-      aria-label="תצוגה מקדימה"
+      aria-label={t.preview.aria}
       className="flex h-full w-1/2 flex-col overflow-y-auto bg-paper/60"
+      dir={dir}
     >
       <div className="mx-auto flex w-full max-w-5xl gap-6 p-8">
         <article
           className="flex-1 rounded-lg bg-white p-12 shadow-sm"
           style={{
-            fontFamily: `'${theme.bodyFont || 'Heebo'}', system-ui, sans-serif`,
+            fontFamily: `'${theme.bodyFont || defaultBodyFont(lang)}', system-ui, sans-serif`,
             color: '#1a1a1a',
           }}
         >
           {theme.logo && (
             <img
               src={theme.logo}
-              alt="לוגו"
+              alt={t.common.logo}
               className="mb-6 h-16 w-auto"
               style={{ objectFit: 'contain' }}
             />
@@ -316,14 +323,14 @@ export default function Preview() {
           <h1
             className="mb-8 border-b pb-6 text-4xl font-bold"
             style={{
-              fontFamily: `'${theme.headingFont || 'Frank Ruhl Libre'}', serif`,
+              fontFamily: `'${theme.headingFont || defaultHeadingFont(lang)}', serif`,
               borderColor: theme.accentColor || '#e7e5e0',
             }}
           >
-            {title || 'דוח ללא שם'}
+            {title || t.common.untitled}
           </h1>
           {blocks.length === 0 ? (
-            <p className="text-ink/40">הדוח ריק. הוסף בלוקים בעורך.</p>
+            <p className="text-ink/40">{t.preview.emptyReport}</p>
           ) : (
             blocks.map((block) => (
               <PreviewBlock
@@ -332,6 +339,8 @@ export default function Preview() {
                 headingIdsById={headingIdsById}
                 theme={theme}
                 reportTitle={title}
+                t={t}
+                lang={lang}
               />
             ))
           )}
@@ -339,10 +348,10 @@ export default function Preview() {
 
         {showTOC && (
           <nav
-            aria-label="תוכן עניינים"
+            aria-label={t.preview.tocAria}
             className="sticky top-4 hidden h-fit w-48 shrink-0 rounded-lg border border-subtle bg-white p-4 text-sm xl:block"
           >
-            <h2 className="mb-2 font-serif font-semibold text-ink">תוכן עניינים</h2>
+            <h2 className="mb-2 font-serif font-semibold text-ink">{t.preview.toc}</h2>
             <ul className="flex flex-col gap-1">
               {headings.map((h) => (
                 <li key={h.id} style={{ paddingInlineStart: (h.level - 1) * 10 }}>

@@ -3,16 +3,49 @@ import { BarChart3, LineChart, AreaChart, PieChart, Upload } from 'lucide-react'
 import { useReportStore } from '../../store/reportStore'
 import { parseExcel } from '../../lib/excel'
 import ChartRenderer from '../ChartRenderer'
+import { useLang } from '../../i18n'
 
-const CHART_TYPES = [
-  { value: 'bar', label: 'עמודות', Icon: BarChart3 },
-  { value: 'line', label: 'קווי', Icon: LineChart },
-  { value: 'area', label: 'שטח', Icon: AreaChart },
-  { value: 'pie', label: 'עוגה', Icon: PieChart },
-]
+const EXTRA = {
+  he: {
+    titlePh: 'כותרת לגרף',
+    types: [
+      { value: 'bar', label: 'עמודות', Icon: BarChart3 },
+      { value: 'line', label: 'קווי', Icon: LineChart },
+      { value: 'area', label: 'שטח', Icon: AreaChart },
+      { value: 'pie', label: 'עוגה', Icon: PieChart },
+    ],
+    uploadExcel: 'העלה קובץ Excel',
+    imported: 'גרף מיובא (SVG)',
+    replaceSvg: 'החלף בגרף חדש',
+    sheet: 'גיליון:',
+    xAxis: 'ציר X:',
+    yAxis: 'ציר Y:',
+    choose: 'בחר...',
+    replace: 'החלף קובץ',
+  },
+  en: {
+    titlePh: 'Chart title',
+    types: [
+      { value: 'bar', label: 'Bar', Icon: BarChart3 },
+      { value: 'line', label: 'Line', Icon: LineChart },
+      { value: 'area', label: 'Area', Icon: AreaChart },
+      { value: 'pie', label: 'Pie', Icon: PieChart },
+    ],
+    uploadExcel: 'Upload Excel file',
+    imported: 'Imported chart (SVG)',
+    replaceSvg: 'Replace with a new chart',
+    sheet: 'Sheet:',
+    xAxis: 'X axis:',
+    yAxis: 'Y axis:',
+    choose: 'Select…',
+    replace: 'Replace file',
+  },
+}
 
 export default function ChartBlock({ block }) {
   const updateBlock = useReportStore((s) => s.updateBlock)
+  const lang = useLang()
+  const L = EXTRA[lang] || EXTRA.he
   const fileInputRef = useRef(null)
   const { source, sheet, xColumn, yColumns = [], chartType = 'bar', title = '' } = block.data
 
@@ -36,7 +69,7 @@ export default function ChartBlock({ block }) {
           type="text"
           value={title}
           onChange={(e) => updateBlock(block.id, { title: e.target.value })}
-          placeholder="כותרת לגרף"
+          placeholder={L.titlePh}
           className="rounded border border-subtle bg-white px-3 py-1.5 text-sm focus:outline-none"
         />
         <div
@@ -44,7 +77,7 @@ export default function ChartBlock({ block }) {
           dangerouslySetInnerHTML={{ __html: block.data.importedSvg }}
         />
         <div className="flex items-center justify-between gap-2 text-xs text-ink/60">
-          <span>גרף מיובא (SVG)</span>
+          <span>{L.imported}</span>
           <button
             type="button"
             onClick={() =>
@@ -56,7 +89,7 @@ export default function ChartBlock({ block }) {
             }
             className="rounded border border-subtle bg-white px-2 py-1 hover:bg-paper"
           >
-            החלף בגרף חדש
+            {L.replaceSvg}
           </button>
         </div>
       </div>
@@ -73,7 +106,7 @@ export default function ChartBlock({ block }) {
           className="flex items-center gap-2 rounded-md border border-subtle bg-white px-4 py-2 text-sm text-ink/80 hover:bg-paper"
         >
           <Upload size={14} />
-          העלה קובץ Excel
+          {L.uploadExcel}
         </button>
         <input
           ref={fileInputRef}
@@ -110,7 +143,7 @@ export default function ChartBlock({ block }) {
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-subtle bg-white p-3 text-xs">
         {source.sheets.length > 1 && (
           <label className="flex items-center gap-1">
-            גיליון:
+            {L.sheet}
             <select
               value={sheet ?? ''}
               onChange={(e) =>
@@ -127,13 +160,13 @@ export default function ChartBlock({ block }) {
           </label>
         )}
         <label className="flex items-center gap-1">
-          ציר X:
+          {L.xAxis}
           <select
             value={xColumn ?? ''}
             onChange={(e) => updateBlock(block.id, { xColumn: e.target.value })}
             className="rounded border border-subtle px-2 py-1"
           >
-            <option value="">בחר...</option>
+            <option value="">{L.choose}</option>
             {headers.map((h) => (
               <option key={h} value={h}>
                 {h}
@@ -142,7 +175,7 @@ export default function ChartBlock({ block }) {
           </select>
         </label>
         <div className="flex flex-wrap items-center gap-1">
-          ציר Y:
+          {L.yAxis}
           {headers.map((h) => (
             <label key={h} className="flex items-center gap-1 rounded border border-subtle px-2 py-1">
               <input
@@ -161,11 +194,11 @@ export default function ChartBlock({ block }) {
           type="text"
           value={title}
           onChange={(e) => updateBlock(block.id, { title: e.target.value })}
-          placeholder="כותרת לגרף"
+          placeholder={L.titlePh}
           className="flex-1 rounded border border-subtle bg-white px-3 py-1.5 text-sm focus:outline-none"
         />
         <div className="flex gap-1">
-          {CHART_TYPES.map(({ value, label, Icon }) => (
+          {L.types.map(({ value, label, Icon }) => (
             <button
               key={value}
               type="button"
@@ -186,7 +219,7 @@ export default function ChartBlock({ block }) {
           onClick={() => fileInputRef.current?.click()}
           className="rounded border border-subtle bg-white px-2 py-1.5 text-xs text-ink/70 hover:bg-paper"
         >
-          החלף קובץ
+          {L.replace}
         </button>
         <input
           ref={fileInputRef}
@@ -203,6 +236,7 @@ export default function ChartBlock({ block }) {
         xKey={xColumn}
         yKeys={yColumns}
         title={title}
+        lang={lang}
       />
     </div>
   )

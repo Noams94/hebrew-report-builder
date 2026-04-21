@@ -1,6 +1,7 @@
 import { forwardRef } from 'react'
 import { GripVertical, Copy, Trash2 } from 'lucide-react'
 import { useReportStore } from '../store/reportStore'
+import { useT, useDir } from '../i18n'
 
 const BlockWrapper = forwardRef(function BlockWrapper(
   {
@@ -15,6 +16,9 @@ const BlockWrapper = forwardRef(function BlockWrapper(
 ) {
   const duplicateBlock = useReportStore((s) => s.duplicateBlock)
   const deleteBlock = useReportStore((s) => s.deleteBlock)
+  const t = useT()
+  const dir = useDir()
+  const actionsPositionClass = dir === 'rtl' ? 'left-full ml-1' : 'right-full mr-1'
 
   return (
     <div
@@ -25,10 +29,12 @@ const BlockWrapper = forwardRef(function BlockWrapper(
       }`}
       {...rest}
     >
-      <div className="absolute top-1/2 left-full ml-1 flex -translate-y-1/2 flex-col gap-1 opacity-0 transition group-hover:opacity-100">
+      <div
+        className={`absolute top-1/2 ${actionsPositionClass} flex -translate-y-1/2 flex-col gap-1 opacity-0 transition group-hover:opacity-100`}
+      >
         <button
           type="button"
-          aria-label="גרור לסידור מחדש"
+          aria-label={t.blockWrapper.dragAria}
           className="rounded p-1 text-ink/60 hover:bg-subtle hover:text-ink"
           {...dragHandleProps}
         >
@@ -36,7 +42,7 @@ const BlockWrapper = forwardRef(function BlockWrapper(
         </button>
         <button
           type="button"
-          aria-label="שכפל בלוק"
+          aria-label={t.blockWrapper.duplicateAria}
           onClick={() => duplicateBlock(block.id)}
           className="rounded p-1 text-ink/60 hover:bg-subtle hover:text-ink"
         >
@@ -44,9 +50,9 @@ const BlockWrapper = forwardRef(function BlockWrapper(
         </button>
         <button
           type="button"
-          aria-label="מחק בלוק"
+          aria-label={t.blockWrapper.deleteAria}
           onClick={() => {
-            if (window.confirm('למחוק את הבלוק?')) {
+            if (window.confirm(t.blockWrapper.deleteConfirm)) {
               deleteBlock(block.id)
             }
           }}

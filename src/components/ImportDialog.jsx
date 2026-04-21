@@ -3,6 +3,7 @@ import { X, FileUp, Clipboard } from 'lucide-react'
 import { useReportStore } from '../store/reportStore'
 import { parseReportJSON, readFileAsText } from '../lib/reportFile'
 import { parseReportHTML } from '../lib/htmlImport'
+import { useT } from '../i18n'
 
 function detectFormat(text, filename = '') {
   const trimmed = text.trim()
@@ -16,6 +17,7 @@ function detectFormat(text, filename = '') {
 
 export default function ImportDialog({ onClose }) {
   const loadReport = useReportStore((s) => s.loadReport)
+  const t = useT()
   const [mode, setMode] = useState('file')
   const [pasteValue, setPasteValue] = useState('')
   const [error, setError] = useState(null)
@@ -40,11 +42,11 @@ export default function ImportDialog({ onClose }) {
         const report = parseReportHTML(text)
         loadReport(report)
       } else {
-        throw new Error('לא ניתן לזהות את פורמט הקובץ (JSON או HTML)')
+        throw new Error(t.importDialog.errorUnknownFormat)
       }
       onClose()
     } catch (err) {
-      setError(err.message || 'שגיאה בייבוא')
+      setError(err.message || t.importDialog.errorImport)
     }
   }
 
@@ -57,14 +59,14 @@ export default function ImportDialog({ onClose }) {
       const text = await readFileAsText(file)
       importText(text, file.name)
     } catch (err) {
-      setError(err.message || 'כשל בקריאת הקובץ')
+      setError(err.message || t.importDialog.errorFileRead)
     }
   }
 
   const handlePaste = () => {
     setError(null)
     if (!pasteValue.trim()) {
-      setError('אין תוכן להדבקה')
+      setError(t.importDialog.errorEmpty)
       return
     }
     importText(pasteValue, '')
@@ -81,15 +83,15 @@ export default function ImportDialog({ onClose }) {
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label="ייבוא דוח"
+        aria-label={t.importDialog.title}
         className="w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-2xl"
       >
         <div className="flex items-center justify-between border-b border-subtle px-5 py-3">
-          <h2 className="font-serif text-lg font-semibold">ייבוא דוח</h2>
+          <h2 className="font-serif text-lg font-semibold">{t.importDialog.title}</h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="סגור"
+            aria-label={t.common.close}
             className="rounded p-1 text-ink/60 hover:bg-paper"
           >
             <X size={18} />
@@ -107,7 +109,7 @@ export default function ImportDialog({ onClose }) {
             }`}
           >
             <FileUp size={16} />
-            מקובץ
+            {t.importDialog.modeFile}
           </button>
           <button
             type="button"
@@ -119,7 +121,7 @@ export default function ImportDialog({ onClose }) {
             }`}
           >
             <Clipboard size={16} />
-            הדבקת HTML
+            {t.importDialog.modePaste}
           </button>
         </div>
 
@@ -127,15 +129,13 @@ export default function ImportDialog({ onClose }) {
           {mode === 'file' && (
             <div className="flex flex-col items-center gap-3 rounded-lg border-2 border-dashed border-subtle py-10 text-center">
               <FileUp size={28} className="text-ink/40" />
-              <p className="text-sm text-ink/70">
-                בחר קובץ <code>.hrb.json</code> או <code>.html</code>
-              </p>
+              <p className="text-sm text-ink/70">{t.importDialog.fileHint}</p>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="rounded-md bg-accent px-4 py-1.5 text-sm text-white hover:opacity-90"
               >
-                בחירת קובץ
+                {t.importDialog.chooseFile}
               </button>
               <input
                 ref={fileInputRef}
@@ -153,13 +153,13 @@ export default function ImportDialog({ onClose }) {
                 htmlFor="import-paste"
                 className="text-sm font-medium text-ink/80"
               >
-                הדבק כאן קוד HTML
+                {t.importDialog.pasteLabel}
               </label>
               <textarea
                 id="import-paste"
                 value={pasteValue}
                 onChange={(e) => setPasteValue(e.target.value)}
-                placeholder="<h1>כותרת</h1><p>תוכן...</p>"
+                placeholder={t.importDialog.pastePlaceholder}
                 rows={10}
                 dir="ltr"
                 className="w-full rounded-md border border-subtle bg-paper p-3 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-accent"
@@ -170,7 +170,7 @@ export default function ImportDialog({ onClose }) {
                   onClick={handlePaste}
                   className="rounded-md bg-accent px-4 py-1.5 text-sm text-white hover:opacity-90"
                 >
-                  ייבוא
+                  {t.importDialog.importBtn}
                 </button>
               </div>
             </div>

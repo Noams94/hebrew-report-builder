@@ -15,6 +15,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import { useT, useLang, isRtl } from '../i18n'
 
 export const CHART_COLORS = [
   '#1e3a5f',
@@ -34,11 +35,17 @@ export default function ChartRenderer({
   yKeys,
   title,
   height = 300,
+  lang: langProp,
 }) {
+  const hookLang = useLang()
+  const t = useT()
+  const lang = langProp || hookLang
+  const rtl = isRtl(lang)
+
   if (!data || data.length === 0 || !xKey || !yKeys || yKeys.length === 0) {
     return (
       <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-subtle text-sm text-ink/40">
-        אין נתונים לגרף
+        {t.preview.noChartData}
       </div>
     )
   }
@@ -74,8 +81,8 @@ export default function ChartRenderer({
     chart = (
       <LineChart data={data} margin={MARGIN}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e0" />
-        <XAxis dataKey={xKey} stroke="#6b6b6b" fontSize={12} />
-        <YAxis stroke="#6b6b6b" fontSize={12} />
+        <XAxis dataKey={xKey} stroke="#6b6b6b" fontSize={12} reversed={rtl} />
+        <YAxis stroke="#6b6b6b" fontSize={12} orientation={rtl ? 'right' : 'left'} />
         <Tooltip />
         <Legend />
         {yKeys.map((key, i) => (
@@ -95,8 +102,8 @@ export default function ChartRenderer({
     chart = (
       <AreaChart data={data} margin={MARGIN}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e0" />
-        <XAxis dataKey={xKey} stroke="#6b6b6b" fontSize={12} />
-        <YAxis stroke="#6b6b6b" fontSize={12} />
+        <XAxis dataKey={xKey} stroke="#6b6b6b" fontSize={12} reversed={rtl} />
+        <YAxis stroke="#6b6b6b" fontSize={12} orientation={rtl ? 'right' : 'left'} />
         <Tooltip />
         <Legend />
         {yKeys.map((key, i) => (
@@ -116,8 +123,8 @@ export default function ChartRenderer({
     chart = (
       <BarChart data={data} margin={MARGIN}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e0" />
-        <XAxis dataKey={xKey} stroke="#6b6b6b" fontSize={12} />
-        <YAxis stroke="#6b6b6b" fontSize={12} />
+        <XAxis dataKey={xKey} stroke="#6b6b6b" fontSize={12} reversed={rtl} />
+        <YAxis stroke="#6b6b6b" fontSize={12} orientation={rtl ? 'right' : 'left'} />
         <Tooltip />
         <Legend />
         {yKeys.map((key, i) => (

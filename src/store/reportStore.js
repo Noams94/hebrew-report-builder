@@ -1,5 +1,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import heDict from '../i18n/he'
+import enDict from '../i18n/en'
+
+const DEFAULT_LANG = 'he'
+
+const LOCALES = { he: heDict, en: enDict }
 
 const defaultDataByType = {
   heading: { level: 2, text: '' },
@@ -48,13 +54,18 @@ const createBlock = (type) => ({
   data: structuredClone(defaultDataByType[type] ?? {}),
 })
 
-const createEmptyReport = (title = 'דוח חדש') => {
+const dictFor = (lang) => (lang === 'en' ? enDict : heDict)
+
+const createEmptyReport = (title, lang = DEFAULT_LANG) => {
+  const dict = dictFor(lang)
+  const finalTitle = title ?? dict.common.newReport
   const now = Date.now()
   return {
     id: crypto.randomUUID(),
-    title,
+    title: finalTitle,
     blocks: [],
     theme: {},
+    lang,
     createdAt: now,
     updatedAt: now,
   }
@@ -66,9 +77,11 @@ const makeInitialState = () => {
     title: report.title,
     blocks: report.blocks,
     theme: report.theme,
+    lang: report.lang,
     reports: { [report.id]: report },
     currentReportId: report.id,
     view: 'editor',
+    defaultLang: DEFAULT_LANG,
   }
 }
 
@@ -95,6 +108,20 @@ export const useReportStore = create(
 
       setTheme: (theme) =>
         set((s) => syncToReports(s, { theme: { ...s.theme, ...theme } })),
+
+      setLang: (lang) =>
+        set((s) => {
+          const defaultTitles = new Set(
+            Object.values(LOCALES).map((d) => d.common.newReport),
+          )
+          const patch = { lang }
+          if (defaultTitles.has(s.title)) {
+            patch.title = dictFor(lang).common.newReport
+          }
+          return syncToReports(s, patch)
+        }),
+
+      setDefaultLang: (lang) => set({ defaultLang: lang }),
 
       addBlock: (type, afterId = null) => {
         const block = createBlock(type)
@@ -163,19 +190,27 @@ export const useReportStore = create(
         }),
 
       resetReport: () =>
-        set((s) =>
-          syncToReports(s, { title: 'דוח חדש', blocks: [], theme: {} }),
-        ),
+        set((s) => {
+          const dict = dictFor(s.lang || DEFAULT_LANG)
+          return syncToReports(s, {
+            title: dict.common.newReport,
+            blocks: [],
+            theme: {},
+          })
+        }),
 
       loadReport: (report) =>
         set((s) => {
           const id = report.id || crypto.randomUUID()
           const now = Date.now()
+          const lang = report.lang || s.defaultLang || DEFAULT_LANG
+          const dict = dictFor(lang)
           const full = {
             id,
-            title: report.title || 'דוח חדש',
+            title: report.title || dict.common.newReport,
             blocks: report.blocks || [],
             theme: report.theme || {},
+            lang,
             createdAt: report.createdAt || now,
             updatedAt: now,
           }
@@ -185,13 +220,19 @@ export const useReportStore = create(
             title: full.title,
             blocks: full.blocks,
             theme: full.theme,
+            lang: full.lang,
             view: 'editor',
           }
         }),
 
       createReport: (seed = {}) =>
         set((s) => {
-          const report = createEmptyReport(seed.title || 'דוח חדש')
+          const lang = seed.lang || s.defaultLang || DEFAULT_LANG
+          const dict = dictFor(lang)
+          const report = createEmptyReport(
+            seed.title || dict.common.newReport,
+            lang,
+          )
           if (seed.blocks) {
             report.blocks = seed.blocks.map((b) => ({
               ...structuredClone(b),
@@ -205,6 +246,7 @@ export const useReportStore = create(
             title: report.title,
             blocks: report.blocks,
             theme: report.theme,
+            lang: report.lang,
             view: 'editor',
           }
         }),
@@ -218,6 +260,7 @@ export const useReportStore = create(
             title: target.title,
             blocks: target.blocks,
             theme: target.theme || {},
+            lang: target.lang || DEFAULT_LANG,
           }
         }),
 
@@ -226,13 +269,14 @@ export const useReportStore = create(
           const nextReports = { ...s.reports }
           delete nextReports[id]
           if (Object.keys(nextReports).length === 0) {
-            const fresh = createEmptyReport()
+            const fresh = createEmptyReport(undefined, s.defaultLang || DEFAULT_LANG)
             return {
               reports: { [fresh.id]: fresh },
               currentReportId: fresh.id,
               title: fresh.title,
               blocks: fresh.blocks,
               theme: fresh.theme,
+              lang: fresh.lang,
             }
           }
           if (s.currentReportId === id) {
@@ -244,6 +288,7 @@ export const useReportStore = create(
               title: next.title,
               blocks: next.blocks,
               theme: next.theme || {},
+              lang: next.lang || DEFAULT_LANG,
             }
           }
           return { reports: nextReports }
@@ -253,10 +298,11 @@ export const useReportStore = create(
         set((s) => {
           const original = s.reports[id]
           if (!original) return s
+          const dict = dictFor(original.lang || DEFAULT_LANG)
           const copy = {
             ...structuredClone(original),
             id: crypto.randomUUID(),
-            title: `${original.title} (עותק)`,
+            title: `${original.title} ${dict.common.copy}`,
             createdAt: Date.now(),
             updatedAt: Date.now(),
           }
@@ -277,16 +323,32 @@ export const useReportStore = create(
     }),
     {
       name: 'hebrew-report-builder',
-      version: 2,
+      version: 3,
       migrate: (persistedState, version) => {
         if (!persistedState) return makeInitialState()
-        if (version >= 2) return persistedState
+        if (version >= 3) return persistedState
+        if (version === 2) {
+          const reports = Object.fromEntries(
+            Object.entries(persistedState.reports || {}).map(([id, r]) => [
+              id,
+              { ...r, lang: r.lang || DEFAULT_LANG },
+            ]),
+          )
+          return {
+            ...persistedState,
+            reports,
+            lang:
+              reports[persistedState.currentReportId]?.lang || DEFAULT_LANG,
+            defaultLang: DEFAULT_LANG,
+          }
+        }
         const now = Date.now()
         const report = {
           id: crypto.randomUUID(),
-          title: persistedState.title || 'דוח חדש',
+          title: persistedState.title || heDict.common.newReport,
           blocks: persistedState.blocks || [],
           theme: {},
+          lang: DEFAULT_LANG,
           createdAt: now,
           updatedAt: now,
         }
@@ -294,9 +356,11 @@ export const useReportStore = create(
           title: report.title,
           blocks: report.blocks,
           theme: report.theme,
+          lang: report.lang,
           reports: { [report.id]: report },
           currentReportId: report.id,
           view: 'editor',
+          defaultLang: DEFAULT_LANG,
         }
       },
     },

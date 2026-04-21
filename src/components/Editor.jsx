@@ -14,10 +14,14 @@ import {
 import { useReportStore } from '../store/reportStore'
 import BlockMenu from './BlockMenu'
 import SortableBlock from './SortableBlock'
+import { useT, useDir } from '../i18n'
 
 export default function Editor() {
   const blocks = useReportStore((s) => s.blocks)
   const moveBlock = useReportStore((s) => s.moveBlock)
+  const t = useT()
+  const dir = useDir()
+  const borderClass = dir === 'rtl' ? 'border-l' : 'border-r'
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -34,8 +38,8 @@ export default function Editor() {
 
   return (
     <section
-      aria-label="עורך"
-      className="flex h-full w-1/2 flex-col overflow-y-auto border-l border-subtle bg-paper"
+      aria-label={t.editor.aria}
+      className={`flex h-full w-1/2 flex-col overflow-y-auto ${borderClass} border-subtle bg-paper`}
     >
       <div className="mx-auto w-full max-w-2xl p-8">
         {blocks.length === 0 ? (

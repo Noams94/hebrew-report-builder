@@ -5,14 +5,39 @@ import { parseExcel } from '../../lib/excel'
 import {
   computeStats,
   formatMetric,
-  METRIC_LABELS,
+  getMetricLabels,
   DEFAULT_METRICS,
 } from '../../lib/stats'
+import { useLang } from '../../i18n'
 
 const ALL_METRICS = ['n', 'mean', 'median', 'std', 'min', 'max', 'sum']
 
+const EXTRA = {
+  he: {
+    upload: 'העלה Excel לחישוב סטטיסטיקה',
+    sheet: 'גיליון:',
+    column: 'עמודה:',
+    choose: 'בחר...',
+    metrics: 'מדדים:',
+    replace: 'החלף קובץ',
+    titlePh: 'כותרת (אופציונלי)',
+  },
+  en: {
+    upload: 'Upload Excel for statistics',
+    sheet: 'Sheet:',
+    column: 'Column:',
+    choose: 'Select…',
+    metrics: 'Metrics:',
+    replace: 'Replace file',
+    titlePh: 'Title (optional)',
+  },
+}
+
 export default function StatsBlock({ block }) {
   const updateBlock = useReportStore((s) => s.updateBlock)
+  const lang = useLang()
+  const L = EXTRA[lang] || EXTRA.he
+  const METRIC_LABELS = getMetricLabels(lang)
   const fileInputRef = useRef(null)
 
   const {
@@ -63,7 +88,7 @@ export default function StatsBlock({ block }) {
           className="flex items-center gap-2 rounded-md border border-subtle bg-white px-4 py-2 text-sm text-ink/80 hover:bg-paper"
         >
           <Upload size={14} />
-          העלה Excel לחישוב סטטיסטיקה
+          {L.upload}
         </button>
         <input
           ref={fileInputRef}
@@ -83,7 +108,7 @@ export default function StatsBlock({ block }) {
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-subtle bg-white p-3 text-xs">
         {source.sheets.length > 1 && (
           <label className="flex items-center gap-1">
-            גיליון:
+            {L.sheet}
             <select
               value={sheet ?? ''}
               onChange={(e) =>
@@ -100,13 +125,13 @@ export default function StatsBlock({ block }) {
           </label>
         )}
         <label className="flex items-center gap-1">
-          עמודה:
+          {L.column}
           <select
             value={column ?? ''}
             onChange={(e) => updateBlock(block.id, { column: e.target.value })}
             className="rounded border border-subtle px-2 py-1"
           >
-            <option value="">בחר...</option>
+            <option value="">{L.choose}</option>
             {headers.map((h) => (
               <option key={h} value={h}>
                 {h}
@@ -115,7 +140,7 @@ export default function StatsBlock({ block }) {
           </select>
         </label>
         <div className="flex flex-wrap items-center gap-1">
-          מדדים:
+          {L.metrics}
           {ALL_METRICS.map((m) => (
             <label
               key={m}
@@ -135,7 +160,7 @@ export default function StatsBlock({ block }) {
           onClick={() => fileInputRef.current?.click()}
           className="rounded border border-subtle bg-white px-2 py-1 text-xs text-ink/70 hover:bg-paper"
         >
-          החלף קובץ
+          {L.replace}
         </button>
         <input
           ref={fileInputRef}
@@ -150,16 +175,17 @@ export default function StatsBlock({ block }) {
         type="text"
         value={title}
         onChange={(e) => updateBlock(block.id, { title: e.target.value })}
-        placeholder="כותרת (אופציונלי)"
+        placeholder={L.titlePh}
         className="rounded border border-subtle bg-white px-3 py-1.5 text-sm focus:outline-none"
       />
 
-      <StatsGrid title={title} stats={stats} metrics={metrics} />
+      <StatsGrid title={title} stats={stats} metrics={metrics} lang={lang} />
     </div>
   )
 }
 
-export function StatsGrid({ title, stats, metrics }) {
+export function StatsGrid({ title, stats, metrics, lang = 'he' }) {
+  const labels = getMetricLabels(lang)
   return (
     <div className="my-2 rounded-lg border border-subtle bg-white p-4">
       {title && (
@@ -173,7 +199,7 @@ export function StatsGrid({ title, stats, metrics }) {
             key={m}
             className="flex flex-col items-center rounded-md bg-paper px-3 py-2"
           >
-            <span className="text-xs text-ink/60">{METRIC_LABELS[m]}</span>
+            <span className="text-xs text-ink/60">{labels[m]}</span>
             <span className="font-serif text-2xl font-bold text-ink">
               {formatMetric(stats[m], m)}
             </span>

@@ -8,14 +8,31 @@ function toNumbers(values) {
     .filter((v) => v !== null)
 }
 
-export const METRIC_LABELS = {
-  n: 'N',
-  mean: 'ממוצע',
-  median: 'חציון',
-  std: 'סטיית תקן',
-  min: 'ערך מינימלי',
-  max: 'ערך מקסימלי',
-  sum: 'סכום',
+export const METRIC_LABELS_BY_LANG = {
+  he: {
+    n: 'N',
+    mean: 'ממוצע',
+    median: 'חציון',
+    std: 'סטיית תקן',
+    min: 'ערך מינימלי',
+    max: 'ערך מקסימלי',
+    sum: 'סכום',
+  },
+  en: {
+    n: 'N',
+    mean: 'Mean',
+    median: 'Median',
+    std: 'Std dev',
+    min: 'Min',
+    max: 'Max',
+    sum: 'Sum',
+  },
+}
+
+export const METRIC_LABELS = METRIC_LABELS_BY_LANG.he
+
+export function getMetricLabels(lang = 'he') {
+  return METRIC_LABELS_BY_LANG[lang] || METRIC_LABELS_BY_LANG.he
 }
 
 export const DEFAULT_METRICS = ['n', 'mean', 'median', 'std', 'min', 'max']

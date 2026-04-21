@@ -12,10 +12,17 @@ import {
   ImageRun,
   BorderStyle,
 } from 'docx'
+import heDict from '../i18n/he'
+import enDict from '../i18n/en'
 
-const RTL_ALIGN = AlignmentType.RIGHT
+const dictFor = (lang) => (lang === 'en' ? enDict : heDict)
+const alignFor = (lang) =>
+  lang === 'en' ? AlignmentType.LEFT : AlignmentType.RIGHT
+const isRTL = (lang) => lang !== 'en'
+const defaultFont = (lang) => (lang === 'en' ? 'Calibri' : 'Arial')
 
-function parseInlineToRuns(text) {
+function parseInlineToRuns(text, lang) {
+  const rtl = isRTL(lang)
   const runs = []
   let i = 0
   while (i < text.length) {
@@ -31,7 +38,7 @@ function parseInlineToRuns(text) {
 
     if (nextIdx > i) {
       runs.push(
-        new TextRun({ text: text.slice(i, nextIdx), rightToLeft: true }),
+        new TextRun({ text: text.slice(i, nextIdx), rightToLeft: rtl }),
       )
       i = nextIdx
     }
@@ -40,40 +47,40 @@ function parseInlineToRuns(text) {
     if (text.slice(i, i + 2) === '**') {
       const end = text.indexOf('**', i + 2)
       if (end === -1) {
-        runs.push(new TextRun({ text: text.slice(i), rightToLeft: true }))
+        runs.push(new TextRun({ text: text.slice(i), rightToLeft: rtl }))
         break
       }
       runs.push(
         new TextRun({
           text: text.slice(i + 2, end),
           bold: true,
-          rightToLeft: true,
+          rightToLeft: rtl,
         }),
       )
       i = end + 2
     } else if (text[i] === '*') {
       const end = text.indexOf('*', i + 1)
       if (end === -1) {
-        runs.push(new TextRun({ text: text.slice(i), rightToLeft: true }))
+        runs.push(new TextRun({ text: text.slice(i), rightToLeft: rtl }))
         break
       }
       runs.push(
         new TextRun({
           text: text.slice(i + 1, end),
           italics: true,
-          rightToLeft: true,
+          rightToLeft: rtl,
         }),
       )
       i = end + 1
     } else if (text[i] === '[') {
       const close = text.indexOf(']', i + 1)
       if (close === -1 || text[close + 1] !== '(') {
-        runs.push(new TextRun({ text: text.slice(i), rightToLeft: true }))
+        runs.push(new TextRun({ text: text.slice(i), rightToLeft: rtl }))
         break
       }
       const paren = text.indexOf(')', close + 2)
       if (paren === -1) {
-        runs.push(new TextRun({ text: text.slice(i), rightToLeft: true }))
+        runs.push(new TextRun({ text: text.slice(i), rightToLeft: rtl }))
         break
       }
       const label = text.slice(i + 1, close)
@@ -81,36 +88,38 @@ function parseInlineToRuns(text) {
         new TextRun({
           text: label,
           style: 'Hyperlink',
-          rightToLeft: true,
+          rightToLeft: rtl,
         }),
       )
       i = paren + 1
     }
   }
-  return runs.length ? runs : [new TextRun({ text: '', rightToLeft: true })]
+  return runs.length ? runs : [new TextRun({ text: '', rightToLeft: rtl })]
 }
 
-function textBlockToParagraphs(markdown) {
+function textBlockToParagraphs(markdown, lang) {
   const lines = (markdown || '').split(/\r?\n/)
   const paragraphs = []
+  const align = alignFor(lang)
+  const rtl = isRTL(lang)
   for (const line of lines) {
     const trimmed = line.trim()
     if (!trimmed) continue
     if (trimmed.startsWith('- ')) {
       paragraphs.push(
         new Paragraph({
-          children: parseInlineToRuns(trimmed.slice(2)),
-          alignment: RTL_ALIGN,
-          bidirectional: true,
+          children: parseInlineToRuns(trimmed.slice(2), lang),
+          alignment: align,
+          bidirectional: rtl,
           bullet: { level: 0 },
         }),
       )
     } else {
       paragraphs.push(
         new Paragraph({
-          children: parseInlineToRuns(trimmed),
-          alignment: RTL_ALIGN,
-          bidirectional: true,
+          children: parseInlineToRuns(trimmed, lang),
+          alignment: align,
+          bidirectional: rtl,
         }),
       )
     }
@@ -118,7 +127,7 @@ function textBlockToParagraphs(markdown) {
   return paragraphs
 }
 
-function headingBlockToParagraph(block) {
+function headingBlockToParagraph(block, lang) {
   const level = block.data.level ?? 2
   const levelMap = {
     1: HeadingLevel.HEADING_1,
@@ -127,31 +136,33 @@ function headingBlockToParagraph(block) {
   }
   return new Paragraph({
     heading: levelMap[level] || HeadingLevel.HEADING_2,
-    alignment: RTL_ALIGN,
-    bidirectional: true,
+    alignment: alignFor(lang),
+    bidirectional: isRTL(lang),
     children: [
       new TextRun({
         text: block.data.text || '',
         bold: true,
-        rightToLeft: true,
+        rightToLeft: isRTL(lang),
       }),
     ],
   })
 }
 
-function tableBlockToTable(block) {
+function tableBlockToTable(block, lang) {
   const { headers = [], rows = [] } = block.data
   if (headers.length === 0) return null
+  const align = alignFor(lang)
+  const rtl = isRTL(lang)
   const headerRow = new TableRow({
     children: headers.map(
       (h) =>
         new TableCell({
           children: [
             new Paragraph({
-              alignment: RTL_ALIGN,
-              bidirectional: true,
+              alignment: align,
+              bidirectional: rtl,
               children: [
-                new TextRun({ text: String(h), bold: true, rightToLeft: true }),
+                new TextRun({ text: String(h), bold: true, rightToLeft: rtl }),
               ],
             }),
           ],
@@ -167,12 +178,12 @@ function tableBlockToTable(block) {
             new TableCell({
               children: [
                 new Paragraph({
-                  alignment: RTL_ALIGN,
-                  bidirectional: true,
+                  alignment: align,
+                  bidirectional: rtl,
                   children: [
                     new TextRun({
                       text: String(row[i] ?? ''),
-                      rightToLeft: true,
+                      rightToLeft: rtl,
                     }),
                   ],
                 }),
@@ -201,22 +212,23 @@ function dataUrlToImageRun(dataUrl, maxWidth = 500) {
   })
 }
 
-function imageBlockToParagraph(block) {
+function imageBlockToParagraph(block, lang) {
   const { src, caption } = block.data
+  const dict = dictFor(lang)
+  const align = alignFor(lang)
+  const rtl = isRTL(lang)
   if (!src) return []
-  const imageRun = src.startsWith('data:')
-    ? dataUrlToImageRun(src)
-    : null
+  const imageRun = src.startsWith('data:') ? dataUrlToImageRun(src) : null
   if (!imageRun) {
     return [
       new Paragraph({
-        alignment: RTL_ALIGN,
-        bidirectional: true,
+        alignment: align,
+        bidirectional: rtl,
         children: [
           new TextRun({
-            text: `[תמונה: ${src}]`,
+            text: dict.export.imageFallback(src),
             italics: true,
-            rightToLeft: true,
+            rightToLeft: rtl,
           }),
         ],
       }),
@@ -232,13 +244,13 @@ function imageBlockToParagraph(block) {
     out.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,
-        bidirectional: true,
+        bidirectional: rtl,
         children: [
           new TextRun({
             text: caption,
             italics: true,
             size: 20,
-            rightToLeft: true,
+            rightToLeft: rtl,
           }),
         ],
       }),
@@ -247,9 +259,9 @@ function imageBlockToParagraph(block) {
   return out
 }
 
-function dividerParagraph() {
+function dividerParagraph(lang) {
   return new Paragraph({
-    alignment: RTL_ALIGN,
+    alignment: alignFor(lang),
     border: {
       bottom: {
         color: '999999',
@@ -258,34 +270,35 @@ function dividerParagraph() {
         style: BorderStyle.SINGLE,
       },
     },
-    children: [new TextRun({ text: '', rightToLeft: true })],
+    children: [new TextRun({ text: '', rightToLeft: isRTL(lang) })],
   })
 }
 
-function blockToDocxNodes(block) {
+function blockToDocxNodes(block, lang) {
+  const dict = dictFor(lang)
   switch (block.type) {
     case 'heading':
-      return [headingBlockToParagraph(block)]
+      return [headingBlockToParagraph(block, lang)]
     case 'text':
-      return textBlockToParagraphs(block.data.markdown)
+      return textBlockToParagraphs(block.data.markdown, lang)
     case 'divider':
-      return [dividerParagraph()]
+      return [dividerParagraph(lang)]
     case 'image':
-      return imageBlockToParagraph(block)
+      return imageBlockToParagraph(block, lang)
     case 'table': {
-      const t = tableBlockToTable(block)
+      const t = tableBlockToTable(block, lang)
       return t ? [t, new Paragraph({ children: [] })] : []
     }
     case 'chart':
       return [
         new Paragraph({
-          alignment: RTL_ALIGN,
-          bidirectional: true,
+          alignment: alignFor(lang),
+          bidirectional: isRTL(lang),
           children: [
             new TextRun({
-              text: `[גרף: ${block.data.title || 'ללא כותרת'} — גרפים אינם נכללים בייצוא Word בגרסה זו]`,
+              text: dict.export.chartNotIncluded(block.data.title),
               italics: true,
-              rightToLeft: true,
+              rightToLeft: isRTL(lang),
             }),
           ],
         }),
@@ -295,28 +308,30 @@ function blockToDocxNodes(block) {
   }
 }
 
-export async function exportReportDOCX(title, blocks) {
+export async function exportReportDOCX(title, blocks, lang = 'he') {
+  const dict = dictFor(lang)
+  const rtl = isRTL(lang)
   const titleParagraph = new Paragraph({
-    alignment: RTL_ALIGN,
-    bidirectional: true,
+    alignment: alignFor(lang),
+    bidirectional: rtl,
     spacing: { after: 400 },
     children: [
       new TextRun({
-        text: title || 'דוח',
+        text: title || dict.export.fallbackTitle,
         bold: true,
         size: 48,
-        rightToLeft: true,
+        rightToLeft: rtl,
       }),
     ],
   })
 
-  const body = blocks.flatMap((b) => blockToDocxNodes(b))
+  const body = blocks.flatMap((b) => blockToDocxNodes(b, lang))
 
   const doc = new Document({
     styles: {
       default: {
         document: {
-          run: { font: 'Arial', rightToLeft: true },
+          run: { font: defaultFont(lang), rightToLeft: rtl },
         },
       },
     },
@@ -337,7 +352,7 @@ export async function exportReportDOCX(title, blocks) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `${title || 'דוח'}.docx`
+  a.download = `${title || dict.export.fallbackTitle}.docx`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)

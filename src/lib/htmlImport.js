@@ -27,14 +27,22 @@ function listToMarkdown(ul) {
   return items.map((li) => `- ${htmlToMarkdown(li).trim()}`).join('\n')
 }
 
-function extractTitle(doc) {
+function extractTitle(doc, lang) {
   const reportTitle = doc.querySelector('.report-title')
   if (reportTitle?.textContent) return reportTitle.textContent.trim()
   const h1 = doc.querySelector('h1')
   if (h1?.textContent) return h1.textContent.trim()
   const title = doc.querySelector('title')
   if (title?.textContent) return title.textContent.trim()
-  return 'דוח מיובא'
+  return lang === 'en' ? 'Imported report' : 'דוח מיובא'
+}
+
+function detectLang(doc) {
+  const htmlLang = doc.documentElement?.getAttribute('lang')
+  if (htmlLang === 'en') return 'en'
+  const dir = doc.documentElement?.getAttribute('dir')
+  if (dir === 'ltr') return 'en'
+  return 'he'
 }
 
 function blockFromElement(el) {
@@ -190,12 +198,13 @@ function walkForBlocks(container) {
 
 export function parseReportHTML(htmlString) {
   if (!htmlString || typeof htmlString !== 'string') {
-    throw new Error('HTML ריק')
+    throw new Error('Empty HTML')
   }
   const doc = new DOMParser().parseFromString(htmlString, 'text/html')
-  if (!doc || !doc.body) throw new Error('HTML לא תקין')
+  if (!doc || !doc.body) throw new Error('Invalid HTML')
 
-  const title = extractTitle(doc)
+  const lang = detectLang(doc)
+  const title = extractTitle(doc, lang)
 
   const container =
     doc.querySelector('article.article') ||
@@ -209,5 +218,6 @@ export function parseReportHTML(htmlString) {
     title,
     blocks,
     theme: {},
+    lang,
   }
 }

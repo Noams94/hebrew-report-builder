@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useT, useLang, isRtl } from '../i18n'
 
 const LOW = [240, 245, 250]
 const HIGH = [30, 58, 95]
@@ -10,7 +11,11 @@ function interpolate(t) {
   return `rgb(${lerp(LOW[0], HIGH[0], t)}, ${lerp(LOW[1], HIGH[1], t)}, ${lerp(LOW[2], HIGH[2], t)})`
 }
 
-export default function MapPreview({ data }) {
+export default function MapPreview({ data, lang: langProp }) {
+  const hookLang = useLang()
+  const t = useT()
+  const lang = langProp || hookLang
+  const rtl = isRtl(lang)
   const {
     title = '',
     points = [],
@@ -31,7 +36,7 @@ export default function MapPreview({ data }) {
   if (points.length === 0) {
     return (
       <div className="my-4 rounded border border-dashed border-subtle p-4 text-sm text-ink/40">
-        [בלוק מפה — הוסף נקודות בעורך]
+        {t.preview.emptyMap}
       </div>
     )
   }
@@ -56,9 +61,9 @@ export default function MapPreview({ data }) {
           />
           {points.map((p) => {
             const hasVal = p.value !== null && p.value !== undefined
-            const t = hasVal ? (p.value - minV) / range : 0
+            const pos = hasVal ? (p.value - minV) / range : 0
             const fill =
-              colorByValue && hasVal ? interpolate(t) : '#0f766e'
+              colorByValue && hasVal ? interpolate(pos) : '#0f766e'
             return (
               <CircleMarker
                 key={p.id}
@@ -72,9 +77,18 @@ export default function MapPreview({ data }) {
                 }}
               >
                 <Popup>
-                  <div style={{ direction: 'rtl', textAlign: 'right' }}>
-                    <strong>{p.label || 'נקודה'}</strong>
-                    {hasVal && <div>ערך: {p.value}</div>}
+                  <div
+                    style={{
+                      direction: rtl ? 'rtl' : 'ltr',
+                      textAlign: rtl ? 'right' : 'left',
+                    }}
+                  >
+                    <strong>{p.label || t.common.point}</strong>
+                    {hasVal && (
+                      <div>
+                        {t.common.value}: {p.value}
+                      </div>
+                    )}
                   </div>
                 </Popup>
               </CircleMarker>

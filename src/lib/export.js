@@ -1,6 +1,10 @@
 import { parseMarkdown } from './markdown'
 import { slugify } from './slugify'
-import { computeStats, formatMetric, METRIC_LABELS } from './stats'
+import { computeStats, formatMetric, getMetricLabels } from './stats'
+import heDict from '../i18n/he'
+import enDict from '../i18n/en'
+
+const dictFor = (lang) => (lang === 'en' ? enDict : heDict)
 
 const escapeHTML = (text) =>
   String(text ?? '')
@@ -10,10 +14,15 @@ const escapeHTML = (text) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
 
-const buildDocStyles = (theme = {}) => {
+const defaultHeadingFont = (lang) =>
+  lang === 'en' ? 'Merriweather' : 'Frank Ruhl Libre'
+const defaultBodyFont = (lang) => (lang === 'en' ? 'Inter' : 'Heebo')
+
+const buildDocStyles = (theme = {}, lang = 'he') => {
   const accent = theme.accentColor || '#1e3a5f'
-  const headingFont = theme.headingFont || 'Frank Ruhl Libre'
-  const bodyFont = theme.bodyFont || 'Heebo'
+  const headingFont = theme.headingFont || defaultHeadingFont(lang)
+  const bodyFont = theme.bodyFont || defaultBodyFont(lang)
+  const textAlign = lang === 'en' ? 'left' : 'right'
   return `
   * { box-sizing: border-box; }
   :root { --accent: ${accent}; }
@@ -91,15 +100,15 @@ const buildDocStyles = (theme = {}) => {
   figure img { max-width: 100%; max-height: 520px; border-radius: 6px; }
   figcaption { font-size: 14px; color: #666; font-style: italic; margin-top: 8px; }
   table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 15px; }
-  th, td { padding: 10px 12px; text-align: right; }
+  th, td { padding: 10px 12px; text-align: ${textAlign}; }
   th { background: #faf9f6; border-bottom: 2px solid var(--accent); font-weight: 600; }
   td { border-bottom: 1px solid #e7e5e0; }
   .chart-wrapper { margin: 24px 0; }
-  .chart-title { text-align: center; font-family: 'Frank Ruhl Libre', serif; font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  .chart-title { text-align: center; font-family: '${headingFont}', serif; font-size: 18px; font-weight: 600; margin-bottom: 8px; }
   .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin: 20px 0; padding: 16px; border: 1px solid #e7e5e0; border-radius: 8px; background: #fff; }
   .stats-cell { display: flex; flex-direction: column; align-items: center; padding: 10px; background: #faf9f6; border-radius: 6px; }
   .stats-label { font-size: 12px; color: #666; }
-  .stats-value { font-family: 'Frank Ruhl Libre', serif; font-size: 28px; font-weight: 700; }
+  .stats-value { font-family: '${headingFont}', serif; font-size: 28px; font-weight: 700; }
   .map-wrapper { margin: 24px 0; }
   .map-wrapper .map-container { height: 400px; border-radius: 8px; border: 1px solid #e7e5e0; }
   @media print { .leaflet-control-attribution { font-size: 9px; } }
@@ -154,29 +163,33 @@ const renderChart = (block) => {
   return `<div class="chart-wrapper">${titleHTML}<div class="chart-canvas-wrapper" style="position:relative;max-width:760px;margin:0 auto;height:320px;"><canvas data-hrb-chart='${payload}'></canvas></div></div>`
 }
 
-const LIKERT_LABELS_5 = [
-  'לא מסכים בכלל',
-  'לא מסכים',
-  'ניטרלי',
-  'מסכים',
-  'מסכים בהחלט',
-]
-const LIKERT_LABELS_7 = [
-  'לא מסכים בכלל',
-  'לא מסכים',
-  'די לא מסכים',
-  'ניטרלי',
-  'די מסכים',
-  'מסכים',
-  'מסכים בהחלט',
-]
-const LIKERT_COLORS_5 = [
-  '#b91c1c',
-  '#f87171',
-  '#9ca3af',
-  '#4ade80',
-  '#15803d',
-]
+const LIKERT_LABELS = {
+  he: {
+    5: ['לא מסכים בכלל', 'לא מסכים', 'ניטרלי', 'מסכים', 'מסכים בהחלט'],
+    7: [
+      'לא מסכים בכלל',
+      'לא מסכים',
+      'די לא מסכים',
+      'ניטרלי',
+      'די מסכים',
+      'מסכים',
+      'מסכים בהחלט',
+    ],
+  },
+  en: {
+    5: ['Strongly disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly agree'],
+    7: [
+      'Strongly disagree',
+      'Disagree',
+      'Somewhat disagree',
+      'Neutral',
+      'Somewhat agree',
+      'Agree',
+      'Strongly agree',
+    ],
+  },
+}
+const LIKERT_COLORS_5 = ['#b91c1c', '#f87171', '#9ca3af', '#4ade80', '#15803d']
 const LIKERT_COLORS_7 = [
   '#7f1d1d',
   '#b91c1c',
@@ -187,17 +200,19 @@ const LIKERT_COLORS_7 = [
   '#14532d',
 ]
 
-const renderLikert = (block) => {
+const renderLikert = (block, lang) => {
   const { scale = 5, questions = [], title } = block.data
+  const dict = dictFor(lang)
   const titleHTML = title
     ? `<div class="chart-title">${escapeHTML(title)}</div>`
     : ''
   const hasData = questions.some((q) => q.responses?.some((r) => r > 0))
   if (!hasData) return ''
-  const labels = scale === 7 ? LIKERT_LABELS_7 : LIKERT_LABELS_5
+  const labelsByScale = LIKERT_LABELS[lang] || LIKERT_LABELS.he
+  const labels = scale === 7 ? labelsByScale[7] : labelsByScale[5]
   const colors = scale === 7 ? LIKERT_COLORS_7 : LIKERT_COLORS_5
   const questionLabels = questions.map(
-    (q, i) => q.text || `שאלה ${i + 1}`,
+    (q, i) => q.text || dict.preview.question(i + 1),
   )
   const datasets = labels.map((label, i) => ({
     label,
@@ -214,7 +229,9 @@ const renderLikert = (block) => {
 }
 
 const renderBlock = (block, context) => {
-  const { headingIds = {}, reportTitle = '', theme = {} } = context || {}
+  const { headingIds = {}, reportTitle = '', theme = {}, lang = 'he' } =
+    context || {}
+  const dict = dictFor(lang)
   const { type, data, id } = block
 
   if (type === 'heading') {
@@ -231,7 +248,7 @@ const renderBlock = (block, context) => {
   if (type === 'image') {
     const { src, caption, alt } = data
     if (!src) return ''
-    const altText = escapeHTML(alt || caption || 'תמונה בדוח')
+    const altText = escapeHTML(alt || caption || dict.export.imageAlt)
     const captionHTML = caption
       ? `<figcaption>${escapeHTML(caption)}</figcaption>`
       : ''
@@ -276,14 +293,14 @@ const renderBlock = (block, context) => {
     const title = useReportTitle ? reportTitle : overrideTitle
     const coverLogo = useThemeLogo ? theme.logo : logo
     const accent = theme.accentColor || '#1e3a5f'
-    const headingFont = theme.headingFont || 'Frank Ruhl Libre'
-    const bodyFont = theme.bodyFont || 'Heebo'
+    const headingFont = theme.headingFont || defaultHeadingFont(lang)
+    const bodyFont = theme.bodyFont || defaultBodyFont(lang)
     const logoHTML = coverLogo
-      ? `<img src="${coverLogo}" alt="לוגו" style="max-height:96px;width:auto;margin-bottom:32px;object-fit:contain;" />`
+      ? `<img src="${coverLogo}" alt="${dict.export.logoAlt}" style="max-height:96px;width:auto;margin-bottom:32px;object-fit:contain;" />`
       : ''
     return `<section class="cover-page" style="min-height:calc(100vh - 96px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;page-break-after:always;padding:40px 20px;">
       ${logoHTML}
-      <h1 style="font-family:'${headingFont}',serif;font-size:48px;font-weight:700;color:${accent};margin:0 0 16px;">${escapeHTML(title || 'דוח')}</h1>
+      <h1 style="font-family:'${headingFont}',serif;font-size:48px;font-weight:700;color:${accent};margin:0 0 16px;">${escapeHTML(title || dict.export.fallbackTitle)}</h1>
       ${subtitle ? `<div style="font-family:'${bodyFont}',sans-serif;font-size:20px;color:#4b5563;">${escapeHTML(subtitle)}</div>` : ''}
       <div style="margin-top:48px;display:flex;flex-direction:column;gap:4px;color:#6b7280;font-size:14px;">
         ${client ? `<div>${escapeHTML(client)}</div>` : ''}
@@ -293,7 +310,7 @@ const renderBlock = (block, context) => {
   }
 
   if (type === 'likert') {
-    return renderLikert(block)
+    return renderLikert(block, lang)
   }
 
   if (type === 'stats') {
@@ -311,13 +328,14 @@ const renderBlock = (block, context) => {
     if (colIndex === -1) return ''
     const values = sheetData.rows.map((r) => r[colIndex])
     const stats = computeStats(values, metrics)
+    const metricLabels = getMetricLabels(lang)
     const titleHTML = title
       ? `<div class="chart-title">${escapeHTML(title)}</div>`
       : ''
     const cells = metrics
       .map(
         (m) => `<div class="stats-cell">
-          <span class="stats-label">${escapeHTML(METRIC_LABELS[m] || m)}</span>
+          <span class="stats-label">${escapeHTML(metricLabels[m] || m)}</span>
           <span class="stats-value">${escapeHTML(formatMetric(stats[m], m))}</span>
         </div>`,
       )
@@ -341,6 +359,7 @@ const renderBlock = (block, context) => {
       center,
       zoom,
       colorByValue,
+      lang,
       points: points.map((p) => ({
         lat: p.lat,
         lng: p.lng,
@@ -369,11 +388,14 @@ const TOC_SCRIPT = `
 })();
 `
 
-const CHART_SCRIPT = `
+const buildChartScript = (lang) => {
+  const rtl = lang !== 'en'
+  return `
 (function initCharts() {
   if (typeof Chart === 'undefined') return;
-  Chart.defaults.font.family = "'Heebo', system-ui, sans-serif";
+  Chart.defaults.font.family = ${JSON.stringify(lang === 'en' ? "'Inter', system-ui, sans-serif" : "'Heebo', system-ui, sans-serif")};
   Chart.defaults.color = '#1a1a1a';
+  var RTL = ${rtl};
   function hexA(hex, a) {
     var m = /^#?([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})$/i.exec(hex);
     if (!m) return hex;
@@ -396,7 +418,10 @@ const CHART_SCRIPT = `
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'right', rtl: true, textDirection: 'rtl' }, tooltip: { rtl: true, textDirection: 'rtl' } }
+          plugins: {
+            legend: { position: RTL ? 'right' : 'left', rtl: RTL, textDirection: RTL ? 'rtl' : 'ltr' },
+            tooltip: { rtl: RTL, textDirection: RTL ? 'rtl' : 'ltr' }
+          }
         }
       };
     }
@@ -412,12 +437,12 @@ const CHART_SCRIPT = `
         options: {
           indexAxis: 'y', responsive: true, maintainAspectRatio: false,
           scales: {
-            x: { stacked: true, position: 'top', reverse: true },
-            y: { stacked: true, position: 'right' }
+            x: { stacked: true, position: 'top', reverse: RTL },
+            y: { stacked: true, position: RTL ? 'right' : 'left' }
           },
           plugins: {
-            legend: { position: 'bottom', rtl: true, textDirection: 'rtl', reverse: true },
-            tooltip: { rtl: true, textDirection: 'rtl' }
+            legend: { position: 'bottom', rtl: RTL, textDirection: RTL ? 'rtl' : 'ltr', reverse: RTL },
+            tooltip: { rtl: RTL, textDirection: RTL ? 'rtl' : 'ltr' }
           }
         }
       };
@@ -440,12 +465,12 @@ const CHART_SCRIPT = `
       options: {
         responsive: true, maintainAspectRatio: false,
         scales: {
-          x: { position: 'top', reverse: true },
-          y: { position: 'right' }
+          x: { position: 'top', reverse: RTL },
+          y: { position: RTL ? 'right' : 'left' }
         },
         plugins: {
-          legend: { position: 'bottom', rtl: true, textDirection: 'rtl' },
-          tooltip: { rtl: true, textDirection: 'rtl' }
+          legend: { position: 'bottom', rtl: RTL, textDirection: RTL ? 'rtl' : 'ltr' },
+          tooltip: { rtl: RTL, textDirection: RTL ? 'rtl' : 'ltr' }
         }
       }
     };
@@ -458,8 +483,15 @@ const CHART_SCRIPT = `
   });
 })();
 `
+}
 
-const MAP_SCRIPT = `
+const buildMapScript = (lang) => {
+  const dict = dictFor(lang)
+  const pointLabel = JSON.stringify(dict.export.point)
+  const valueLabel = JSON.stringify(dict.export.value)
+  const dir = lang === 'en' ? 'ltr' : 'rtl'
+  const align = lang === 'en' ? 'left' : 'right'
+  return `
 (function initMaps() {
   if (typeof L === 'undefined') return;
   var LOW = [240, 245, 250], HIGH = [30, 58, 95];
@@ -483,8 +515,8 @@ const MAP_SCRIPT = `
         var marker = L.circleMarker([p.lat, p.lng], {
           radius: 8, fillColor: fill, color: '#111827', weight: 1, fillOpacity: 0.85
         }).addTo(map);
-        var html = '<div style="direction:rtl;text-align:right;"><strong>' + (p.label || 'נקודה') + '</strong>';
-        if (hasVal) html += '<div>ערך: ' + p.value + '</div>';
+        var html = '<div style="direction:${dir};text-align:${align};"><strong>' + (p.label || ${pointLabel}) + '</strong>';
+        if (hasVal) html += '<div>' + ${valueLabel} + ': ' + p.value + '</div>';
         html += '</div>';
         marker.bindPopup(html);
       });
@@ -492,8 +524,11 @@ const MAP_SCRIPT = `
   });
 })();
 `
+}
 
-export function buildReportHTML(title, blocks, theme = {}) {
+export function buildReportHTML(title, blocks, theme = {}, lang = 'he') {
+  const dict = dictFor(lang)
+  const dir = lang === 'en' ? 'ltr' : 'rtl'
   const headingIds = {}
   const seen = new Map()
   blocks.forEach((b) => {
@@ -508,14 +543,14 @@ export function buildReportHTML(title, blocks, theme = {}) {
     .filter((b) => b.type === 'heading')
     .map((b) => ({
       id: headingIds[b.id],
-      text: b.data.text || 'כותרת ריקה',
+      text: b.data.text || dict.export.emptyHeading,
       level: b.data.level ?? 2,
     }))
   const showTOC = headings.length >= 3
 
   const tocHTML = showTOC
-    ? `<nav class="toc" aria-label="תוכן עניינים">
-        <h2>תוכן עניינים</h2>
+    ? `<nav class="toc" aria-label="${dict.export.tocTitle}">
+        <h2>${dict.export.tocTitle}</h2>
         <ul>${headings
           .map(
             (h) =>
@@ -527,17 +562,17 @@ export function buildReportHTML(title, blocks, theme = {}) {
 
   const blocksHTML = blocks
     .map((b) =>
-      renderBlock(b, { headingIds, reportTitle: title, theme }),
+      renderBlock(b, { headingIds, reportTitle: title, theme, lang }),
     )
     .join('\n')
 
   const logoHTML = theme.logo
-    ? `<img class="report-logo" src="${theme.logo}" alt="לוגו" />`
+    ? `<img class="report-logo" src="${theme.logo}" alt="${dict.export.logoAlt}" />`
     : ''
 
   const fontsFamilies = [
-    `${(theme.headingFont || 'Frank Ruhl Libre').replace(/ /g, '+')}:wght@400;700`,
-    `${(theme.bodyFont || 'Heebo').replace(/ /g, '+')}:wght@400;500;600;700`,
+    `${(theme.headingFont || defaultHeadingFont(lang)).replace(/ /g, '+')}:wght@400;700`,
+    `${(theme.bodyFont || defaultBodyFont(lang)).replace(/ /g, '+')}:wght@400;500;600;700`,
   ]
   const fontsHref = `https://fonts.googleapis.com/css2?${fontsFamilies.map((f) => `family=${f}`).join('&')}&display=swap`
 
@@ -563,28 +598,32 @@ export function buildReportHTML(title, blocks, theme = {}) {
   const chartHTML = hasInteractiveChart
     ? `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>`
     : ''
-  const mapScript = hasMap ? `<script>window.addEventListener('load', function() { ${MAP_SCRIPT} });</script>` : ''
-  const chartScript = hasInteractiveChart ? `<script>window.addEventListener('load', function() { ${CHART_SCRIPT} });</script>` : ''
+  const mapScript = hasMap
+    ? `<script>window.addEventListener('load', function() { ${buildMapScript(lang)} });</script>`
+    : ''
+  const chartScript = hasInteractiveChart
+    ? `<script>window.addEventListener('load', function() { ${buildChartScript(lang)} });</script>`
+    : ''
 
   return `<!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="${lang}" dir="${dir}">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>${escapeHTML(title || 'דוח')}</title>
+<title>${escapeHTML(title || dict.export.fallbackTitle)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="${fontsHref}" rel="stylesheet" />
 ${leafletHTML}
 ${chartHTML}
-<style>${buildDocStyles(theme)}</style>
+<style>${buildDocStyles(theme, lang)}</style>
 </head>
 <body>
 <div class="container${showTOC ? ' with-toc' : ''}">
 ${tocHTML}
 <article class="article">
 ${logoHTML}
-<h1 class="report-title">${escapeHTML(title || 'דוח')}</h1>
+<h1 class="report-title">${escapeHTML(title || dict.export.fallbackTitle)}</h1>
 ${blocksHTML}
 </article>
 </div>
@@ -595,21 +634,23 @@ ${chartScript}
 </html>`.trim()
 }
 
-export function downloadReport(title, blocks, theme = {}) {
-  const html = buildReportHTML(title, blocks, theme)
+export function downloadReport(title, blocks, theme = {}, lang = 'he') {
+  const dict = dictFor(lang)
+  const html = buildReportHTML(title, blocks, theme, lang)
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `${title || 'דוח'}.html`
+  a.download = `${title || dict.export.fallbackTitle}.html`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-export function printReport(title, blocks, theme = {}) {
-  const html = buildReportHTML(title, blocks, theme)
+export function printReport(title, blocks, theme = {}, lang = 'he') {
+  const dict = dictFor(lang)
+  const html = buildReportHTML(title, blocks, theme, lang)
   const existing = document.getElementById('__hrb_print_frame')
   if (existing) existing.remove()
 
@@ -653,7 +694,7 @@ export function printReport(title, blocks, theme = {}) {
 
   const doc = iframe.contentDocument || iframe.contentWindow?.document
   if (!doc) {
-    alert('כשל ביצירת מסגרת הדפסה')
+    alert(dict.print.frameError)
     cleanup()
     return
   }
