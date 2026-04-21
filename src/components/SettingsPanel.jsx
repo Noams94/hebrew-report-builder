@@ -139,6 +139,21 @@ export default function SettingsPanel({ onClose }) {
 
           {aiMode === 'ollama' && (
             <section className="flex flex-col gap-3 rounded border border-subtle bg-paper p-3">
+              {typeof window !== 'undefined' &&
+                window.location.protocol === 'https:' && (
+                  <div className="flex flex-col gap-1 rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
+                    <span>
+                      Ollama רץ על המחשב שלך. כדי לאפשר גישה מאתר HTTPS, הפעל
+                      את Ollama עם משתנה הסביבה הבא:
+                    </span>
+                    <code
+                      dir="ltr"
+                      className="mt-1 rounded bg-white px-2 py-1 font-mono text-[11px]"
+                    >
+                      OLLAMA_ORIGINS={window.location.origin} ollama serve
+                    </code>
+                  </div>
+                )}
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-xs font-medium text-ink/80">
                   Ollama URL
