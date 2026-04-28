@@ -33,6 +33,16 @@ const LOCALIZED = {
       aiOff: 'AI כבוי. הפעל בהגדרות.',
       noKey: 'חסר API key של Claude',
       empty: 'תגובה ריקה מ-Claude',
+      ollamaUnreachable: (url) =>
+        `לא הצלחתי להתחבר ל-Ollama ב-${url}. ודא ש-\`ollama serve\` רץ.`,
+      ollamaCorsHttps: (origin) =>
+        `ב-HTTPS צריך גם: OLLAMA_ORIGINS=${origin} ollama serve`,
+      ollamaModelMissing: (model) =>
+        `המודל "${model}" לא נמצא ב-Ollama. הרץ \`ollama pull ${model}\` או בחר מודל אחר בהגדרות.`,
+      ollamaCorsBlocked: (origin) =>
+        `Ollama דחתה את הבקשה (CORS). הפעל מחדש: OLLAMA_ORIGINS=${origin} ollama serve`,
+      ollamaGeneric: (status, body) =>
+        `שגיאה מ-Ollama (${status})${body ? `: ${body}` : ''}`,
     },
   },
   en: {
@@ -66,6 +76,16 @@ const LOCALIZED = {
       aiOff: 'AI is off. Enable it in Settings.',
       noKey: 'Missing Claude API key',
       empty: 'Empty response from Claude',
+      ollamaUnreachable: (url) =>
+        `Couldn't connect to Ollama at ${url}. Make sure \`ollama serve\` is running.`,
+      ollamaCorsHttps: (origin) =>
+        `Over HTTPS you also need: OLLAMA_ORIGINS=${origin} ollama serve`,
+      ollamaModelMissing: (model) =>
+        `Model "${model}" not found in Ollama. Run \`ollama pull ${model}\` or pick another model in Settings.`,
+      ollamaCorsBlocked: (origin) =>
+        `Ollama rejected the request (CORS). Restart with: OLLAMA_ORIGINS=${origin} ollama serve`,
+      ollamaGeneric: (status, body) =>
+        `Ollama error (${status})${body ? `: ${body}` : ''}`,
     },
   },
 }
@@ -122,17 +142,39 @@ async function callClaude({ apiKey, model, systemPrompt, userPrompt }) {
 }
 
 async function callOllama({ url, model, systemPrompt, userPrompt }) {
-  const res = await fetch(`${url.replace(/\/$/, '')}/api/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: model || 'llama3',
-      prompt: `${systemPrompt}\n\n${userPrompt}`,
-      stream: false,
-    }),
-  })
+  const L = localized()
+  const base = url.replace(/\/$/, '')
+  const effectiveModel = model || 'llama3'
+  const origin =
+    typeof window !== 'undefined' ? window.location.origin : ''
+  const isHttps =
+    typeof window !== 'undefined' && window.location.protocol === 'https:'
+
+  let res
+  try {
+    res = await fetch(`${base}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: effectiveModel,
+        prompt: `${systemPrompt}\n\n${userPrompt}`,
+        stream: false,
+      }),
+    })
+  } catch {
+    const hint = isHttps ? ` ${L.errors.ollamaCorsHttps(origin)}` : ''
+    throw new Error(`${L.errors.ollamaUnreachable(base)}${hint}`)
+  }
+
+  if (res.status === 404) {
+    throw new Error(L.errors.ollamaModelMissing(effectiveModel))
+  }
+  if (res.status === 403) {
+    throw new Error(L.errors.ollamaCorsBlocked(origin))
+  }
   if (!res.ok) {
-    throw new Error(`Ollama ${res.status}`)
+    const body = await res.text().catch(() => '')
+    throw new Error(L.errors.ollamaGeneric(res.status, body.slice(0, 200)))
   }
   const data = await res.json()
   return (data?.response || '').trim()
