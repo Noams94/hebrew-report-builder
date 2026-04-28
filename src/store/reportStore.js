@@ -46,6 +46,10 @@ const defaultDataByType = {
     logo: null,
     useThemeLogo: true,
   },
+  nps: {
+    title: '',
+    counts: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  },
 }
 
 const createBlock = (type) => ({

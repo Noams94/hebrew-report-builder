@@ -12,6 +12,7 @@ import {
   Calculator,
   Map as MapIcon,
   FileText,
+  TrendingUp,
 } from 'lucide-react'
 import { useReportStore } from '../store/reportStore'
 import { useT, useDir } from '../i18n'
@@ -31,6 +32,7 @@ export default function BlockMenu({ afterId = null, large = false }) {
     { type: 'chart', label: t.blockMenu.chart, Icon: BarChart3 },
     { type: 'table', label: t.blockMenu.table, Icon: Table },
     { type: 'likert', label: t.blockMenu.likert, Icon: ListChecks },
+    { type: 'nps', label: t.blockMenu.nps, Icon: TrendingUp },
     { type: 'stats', label: t.blockMenu.stats, Icon: Calculator },
     { type: 'map', label: t.blockMenu.map, Icon: MapIcon },
     { type: 'cover', label: t.blockMenu.cover, Icon: FileText },

@@ -1,6 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import BlockWrapper from './BlockWrapper'
+import BlockErrorBoundary from './BlockErrorBoundary'
 import HeadingBlock from './blocks/HeadingBlock'
 import TextBlock from './blocks/TextBlock'
 import ImageBlock from './blocks/ImageBlock'
@@ -11,6 +12,9 @@ import LikertBlock from './blocks/LikertBlock'
 import StatsBlock from './blocks/StatsBlock'
 import MapBlock from './blocks/MapBlock'
 import CoverBlock from './blocks/CoverBlock'
+import NpsBlock from './blocks/NpsBlock'
+import { useReportStore } from '../store/reportStore'
+import { useT } from '../i18n'
 
 const BLOCK_COMPONENTS = {
   heading: HeadingBlock,
@@ -23,6 +27,7 @@ const BLOCK_COMPONENTS = {
   stats: StatsBlock,
   map: MapBlock,
   cover: CoverBlock,
+  nps: NpsBlock,
 }
 
 export default function SortableBlock({ block }) {
@@ -34,6 +39,8 @@ export default function SortableBlock({ block }) {
     transition,
     isDragging,
   } = useSortable({ id: block.id })
+  const deleteBlock = useReportStore((s) => s.deleteBlock)
+  const t = useT()
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -51,7 +58,14 @@ export default function SortableBlock({ block }) {
       isDragging={isDragging}
       dragHandleProps={{ ...attributes, ...listeners }}
     >
-      <Block block={block} />
+      <BlockErrorBoundary
+        key={block.id}
+        label={block.type}
+        t={t.errorBoundary}
+        onDelete={() => deleteBlock(block.id)}
+      >
+        <Block block={block} />
+      </BlockErrorBoundary>
     </BlockWrapper>
   )
 }

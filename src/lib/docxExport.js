@@ -14,6 +14,7 @@ import {
 } from 'docx'
 import heDict from '../i18n/he'
 import enDict from '../i18n/en'
+import { computeNps } from './nps'
 
 const dictFor = (lang) => (lang === 'en' ? enDict : heDict)
 const alignFor = (lang) =>
@@ -274,6 +275,110 @@ function dividerParagraph(lang) {
   })
 }
 
+function npsBlockToParagraphs(block, lang) {
+  const dict = dictFor(lang)
+  const L = dict.blocks.nps
+  const rtl = isRTL(lang)
+  const { title = '', counts = [] } = block.data
+  const result = computeNps(counts)
+  if (result.n === 0) return []
+
+  const paragraphs = []
+  if (title) {
+    paragraphs.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        bidirectional: rtl,
+        spacing: { after: 100 },
+        children: [
+          new TextRun({ text: title, bold: true, size: 28, rightToLeft: rtl }),
+        ],
+      }),
+    )
+  }
+  const scoreLabel = result.score >= 0 ? `+${result.score}` : `${result.score}`
+  paragraphs.push(
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      bidirectional: rtl,
+      spacing: { after: 60 },
+      children: [
+        new TextRun({
+          text: `${L.scoreLabel}: `,
+          rightToLeft: rtl,
+        }),
+        new TextRun({
+          text: scoreLabel,
+          bold: true,
+          size: 56,
+          rightToLeft: rtl,
+        }),
+      ],
+    }),
+  )
+  paragraphs.push(
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      bidirectional: rtl,
+      spacing: { after: 200 },
+      children: [
+        new TextRun({
+          text: `${L.basedOn} ${result.n} ${L.responsesLower}`,
+          size: 18,
+          rightToLeft: rtl,
+        }),
+      ],
+    }),
+  )
+
+  const segmentTable = new Table({
+    rows: [
+      new TableRow({
+        children: [L.detractors, L.passives, L.promoters].map(
+          (label) =>
+            new TableCell({
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  bidirectional: rtl,
+                  children: [
+                    new TextRun({ text: label, bold: true, rightToLeft: rtl }),
+                  ],
+                }),
+              ],
+              width: { size: 33.33, type: WidthType.PERCENTAGE },
+            }),
+        ),
+      }),
+      new TableRow({
+        children: [
+          `${result.detractorPct.toFixed(0)}% (${result.detractorCount})`,
+          `${result.passivePct.toFixed(0)}% (${result.passiveCount})`,
+          `${result.promoterPct.toFixed(0)}% (${result.promoterCount})`,
+        ].map(
+          (val) =>
+            new TableCell({
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  bidirectional: rtl,
+                  children: [
+                    new TextRun({ text: val, rightToLeft: rtl }),
+                  ],
+                }),
+              ],
+            }),
+        ),
+      }),
+    ],
+    width: { size: 100, type: WidthType.PERCENTAGE },
+  })
+
+  paragraphs.push(segmentTable)
+  paragraphs.push(new Paragraph({ children: [new TextRun({ text: '' })] }))
+  return paragraphs
+}
+
 function blockToDocxNodes(block, lang) {
   const dict = dictFor(lang)
   switch (block.type) {
@@ -303,6 +408,8 @@ function blockToDocxNodes(block, lang) {
           ],
         }),
       ]
+    case 'nps':
+      return npsBlockToParagraphs(block, lang)
     default:
       return []
   }

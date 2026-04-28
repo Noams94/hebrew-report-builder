@@ -1,6 +1,7 @@
 import { parseMarkdown } from './markdown'
 import { slugify } from './slugify'
 import { computeStats, formatMetric, getMetricLabels } from './stats'
+import { computeNps, NPS_COLORS, npsScoreColor } from './nps'
 import heDict from '../i18n/he'
 import enDict from '../i18n/en'
 
@@ -111,6 +112,17 @@ const buildDocStyles = (theme = {}, lang = 'he') => {
   .stats-value { font-family: '${headingFont}', serif; font-size: 28px; font-weight: 700; }
   .map-wrapper { margin: 24px 0; }
   .map-wrapper .map-container { height: 400px; border-radius: 8px; border: 1px solid #e7e5e0; }
+  .nps-card { border: 1px solid #e7e5e0; border-radius: 10px; padding: 24px; margin: 24px 0; background: #fff; }
+  .nps-score-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; text-align: center; }
+  .nps-score-value { font-family: '${headingFont}', serif; font-size: 64px; font-weight: 700; line-height: 1; text-align: center; margin: 4px 0; }
+  .nps-score-meta { font-size: 12px; color: #6b7280; text-align: center; margin-bottom: 16px; }
+  .nps-segments { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 16px 0; }
+  .nps-segment { padding: 12px; border-radius: 6px; text-align: center; }
+  .nps-segment-label { font-size: 12px; font-weight: 600; }
+  .nps-segment-range { font-size: 10px; color: #6b7280; }
+  .nps-segment-pct { font-family: '${headingFont}', serif; font-size: 26px; font-weight: 700; margin: 4px 0; }
+  .nps-segment-count { font-size: 11px; color: #6b7280; }
+  .nps-bar { display: flex; height: 12px; border-radius: 999px; overflow: hidden; margin-top: 12px; }
   @media print { .leaflet-control-attribution { font-size: 9px; } }
   @media print {
     body { background: #fff; }
@@ -228,6 +240,43 @@ const renderLikert = (block, lang) => {
   return `<div class="chart-wrapper">${titleHTML}<div class="chart-canvas-wrapper" style="position:relative;max-width:760px;margin:0 auto;height:${height}px;"><canvas data-hrb-chart='${payload}'></canvas></div></div>`
 }
 
+const renderNps = (block, lang) => {
+  const dict = dictFor(lang)
+  const L = dict.blocks.nps
+  const { title = '', counts = [] } = block.data
+  const result = computeNps(counts)
+  if (result.n === 0) return ''
+  const titleHTML = title
+    ? `<h4 class="chart-title">${escapeHTML(title)}</h4>`
+    : ''
+  const scoreColor = npsScoreColor(result.score)
+  const scoreLabel = result.score >= 0 ? `+${result.score}` : `${result.score}`
+  const segment = (label, range, count, pct, color) =>
+    `<div class="nps-segment" style="background:${color}14;">
+      <div class="nps-segment-label" style="color:${color};">${escapeHTML(label)}</div>
+      <div class="nps-segment-range">${range}</div>
+      <div class="nps-segment-pct">${pct.toFixed(0)}%</div>
+      <div class="nps-segment-count">${count}</div>
+    </div>`
+  const bar = `<div class="nps-bar" role="img" aria-label="${escapeHTML(L.detractors)} ${result.detractorPct.toFixed(0)}%, ${escapeHTML(L.passives)} ${result.passivePct.toFixed(0)}%, ${escapeHTML(L.promoters)} ${result.promoterPct.toFixed(0)}%">
+    ${result.detractorPct > 0 ? `<div style="width:${result.detractorPct}%;background:${NPS_COLORS.detractors};"></div>` : ''}
+    ${result.passivePct > 0 ? `<div style="width:${result.passivePct}%;background:${NPS_COLORS.passives};"></div>` : ''}
+    ${result.promoterPct > 0 ? `<div style="width:${result.promoterPct}%;background:${NPS_COLORS.promoters};"></div>` : ''}
+  </div>`
+  return `<div class="nps-card">
+    ${titleHTML}
+    <div class="nps-score-label">${escapeHTML(L.scoreLabel)}</div>
+    <div class="nps-score-value" dir="ltr" style="color:${scoreColor};">${scoreLabel}</div>
+    <div class="nps-score-meta">${escapeHTML(L.basedOn)} <strong>${result.n}</strong> ${escapeHTML(L.responsesLower)}</div>
+    <div class="nps-segments">
+      ${segment(L.detractors, '0-6', result.detractorCount, result.detractorPct, NPS_COLORS.detractors)}
+      ${segment(L.passives, '7-8', result.passiveCount, result.passivePct, NPS_COLORS.passives)}
+      ${segment(L.promoters, '9-10', result.promoterCount, result.promoterPct, NPS_COLORS.promoters)}
+    </div>
+    ${bar}
+  </div>`
+}
+
 const renderBlock = (block, context) => {
   const { headingIds = {}, reportTitle = '', theme = {}, lang = 'he' } =
     context || {}
@@ -311,6 +360,10 @@ const renderBlock = (block, context) => {
 
   if (type === 'likert') {
     return renderLikert(block, lang)
+  }
+
+  if (type === 'nps') {
+    return renderNps(block, lang)
   }
 
   if (type === 'stats') {

@@ -24,13 +24,18 @@ export default function App() {
 
   return (
     <div className="flex h-full flex-col bg-paper text-ink">
+      <a href="#main" className="skip-link">
+        {t.a11y.skipToMain}
+      </a>
       <HubBar />
       {view === 'library' ? (
-        <ReportLibrary />
+        <main id="main" tabIndex={-1} className="flex flex-1 flex-col overflow-hidden">
+          <ReportLibrary />
+        </main>
       ) : (
         <>
           <Toolbar />
-          <main className="flex flex-1 overflow-hidden">
+          <main id="main" tabIndex={-1} className="flex flex-1 overflow-hidden">
             <Editor />
             <Preview />
           </main>

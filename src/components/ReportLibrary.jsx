@@ -79,9 +79,13 @@ function ReportCard({ report, isCurrent, onOpen, onDuplicate, onDelete, onRename
     <div
       role="button"
       tabIndex={0}
+      aria-current={isCurrent ? 'true' : undefined}
       onClick={() => onOpen(report.id)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') onOpen(report.id)
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpen(report.id)
+        }
       }}
       className={`group relative flex cursor-pointer flex-col gap-3 rounded-xl border bg-white p-5 shadow-sm transition hover:shadow-md ${
         isCurrent ? 'border-accent ring-2 ring-accent/30' : 'border-subtle'

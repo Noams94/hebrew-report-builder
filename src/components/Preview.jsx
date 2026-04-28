@@ -6,8 +6,11 @@ import ChartRenderer from './ChartRenderer'
 import { LikertChart } from './blocks/LikertBlock'
 import { StatsGrid } from './blocks/StatsBlock'
 import { CoverPreview } from './blocks/CoverBlock'
+import { NpsView } from './blocks/NpsBlock'
 import { computeStats } from '../lib/stats'
+import { computeNps } from '../lib/nps'
 import MapPreview from './MapPreview'
+import BlockErrorBoundary from './BlockErrorBoundary'
 import { useT, useLang, useDir, isRtl } from '../i18n'
 
 function defaultHeadingFont(lang) {
@@ -260,6 +263,19 @@ function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '', t, 
     return <MapPreview data={data} lang={lang} />
   }
 
+  if (type === 'nps') {
+    const { title, counts = [] } = data
+    const result = computeNps(counts)
+    if (result.n === 0) {
+      return (
+        <div className="my-4 rounded border border-dashed border-subtle p-4 text-sm text-ink/40">
+          {t.preview.emptyNps}
+        </div>
+      )
+    }
+    return <NpsView title={title} result={result} L={t.blocks.nps} />
+  }
+
   return null
 }
 
@@ -333,15 +349,21 @@ export default function Preview() {
             <p className="text-ink/40">{t.preview.emptyReport}</p>
           ) : (
             blocks.map((block) => (
-              <PreviewBlock
+              <BlockErrorBoundary
                 key={block.id}
-                block={block}
-                headingIdsById={headingIdsById}
-                theme={theme}
-                reportTitle={title}
-                t={t}
-                lang={lang}
-              />
+                variant="preview"
+                label={block.type}
+                t={t.errorBoundary}
+              >
+                <PreviewBlock
+                  block={block}
+                  headingIdsById={headingIdsById}
+                  theme={theme}
+                  reportTitle={title}
+                  t={t}
+                  lang={lang}
+                />
+              </BlockErrorBoundary>
             ))
           )}
         </article>
