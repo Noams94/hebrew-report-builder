@@ -244,8 +244,11 @@ export default {
     haiku: 'Haiku 4.5 (fast and cheap)',
     sonnet: 'Sonnet 4.6 (balanced)',
     opus: 'Opus 4.7 (most capable)',
-    ollamaHttpsNote: () =>
-      `Ollama runs on your machine. To allow access from an HTTPS site, start Ollama with this environment variable:`,
+    ollamaHttpsTitle: () =>
+      `Ollama runs on your machine. To allow access from an HTTPS site, add this origin to OLLAMA_ORIGINS:`,
+    ollamaHttpsAppStep: 'If you use the Ollama app (menu-bar icon) — run this once, then Quit + reopen Ollama from the menu bar:',
+    ollamaHttpsTerminalStep: 'If you run Ollama manually in a terminal:',
+    ollamaHttpsMultipleNote: 'For multiple origins, use a comma-separated list, e.g. https://example.com,http://localhost:3000',
     ollamaUrl: 'Ollama URL',
     ollamaModelName: 'Model name',
     language: 'Language',

@@ -36,11 +36,11 @@ const LOCALIZED = {
       ollamaUnreachable: (url) =>
         `לא הצלחתי להתחבר ל-Ollama ב-${url}. ודא ש-\`ollama serve\` רץ.`,
       ollamaCorsHttps: (origin) =>
-        `ב-HTTPS צריך גם: OLLAMA_ORIGINS=${origin} ollama serve`,
+        `ב-HTTPS צריך לאפשר את המקור הזה ב-Ollama. ב-macOS עם אפליקציית Ollama: \`launchctl setenv OLLAMA_ORIGINS "${origin}"\`, ואז Quit ופתיחה מחדש של Ollama משורת התפריטים.`,
       ollamaModelMissing: (model) =>
         `המודל "${model}" לא נמצא ב-Ollama. הרץ \`ollama pull ${model}\` או בחר מודל אחר בהגדרות.`,
       ollamaCorsBlocked: (origin) =>
-        `Ollama דחתה את הבקשה (CORS). הפעל מחדש: OLLAMA_ORIGINS=${origin} ollama serve`,
+        `Ollama דחתה את הבקשה (CORS). ב-macOS עם אפליקציית Ollama: \`launchctl setenv OLLAMA_ORIGINS "${origin}"\`, ואז Quit ופתיחה מחדש של Ollama.`,
       ollamaGeneric: (status, body) =>
         `שגיאה מ-Ollama (${status})${body ? `: ${body}` : ''}`,
     },
@@ -79,11 +79,11 @@ const LOCALIZED = {
       ollamaUnreachable: (url) =>
         `Couldn't connect to Ollama at ${url}. Make sure \`ollama serve\` is running.`,
       ollamaCorsHttps: (origin) =>
-        `Over HTTPS you also need: OLLAMA_ORIGINS=${origin} ollama serve`,
+        `Over HTTPS, Ollama must allow this origin. On macOS with the Ollama app: \`launchctl setenv OLLAMA_ORIGINS "${origin}"\`, then Quit and reopen Ollama from the menu bar.`,
       ollamaModelMissing: (model) =>
         `Model "${model}" not found in Ollama. Run \`ollama pull ${model}\` or pick another model in Settings.`,
       ollamaCorsBlocked: (origin) =>
-        `Ollama rejected the request (CORS). Restart with: OLLAMA_ORIGINS=${origin} ollama serve`,
+        `Ollama rejected the request (CORS). On macOS with the Ollama app: \`launchctl setenv OLLAMA_ORIGINS "${origin}"\`, then Quit and reopen Ollama.`,
       ollamaGeneric: (status, body) =>
         `Ollama error (${status})${body ? `: ${body}` : ''}`,
     },

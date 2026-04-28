@@ -244,8 +244,11 @@ export default {
     haiku: 'Haiku 4.5 (מהיר וזול)',
     sonnet: 'Sonnet 4.6 (מאוזן)',
     opus: 'Opus 4.7 (הכי חזק)',
-    ollamaHttpsNote: () =>
-      `Ollama רץ על המחשב שלך. כדי לאפשר גישה מאתר HTTPS, הפעל את Ollama עם משתנה הסביבה הבא:`,
+    ollamaHttpsTitle: () =>
+      `Ollama רץ על המחשב שלך. כדי לאפשר גישה מאתר HTTPS, הוסף את המקור הזה ל-OLLAMA_ORIGINS:`,
+    ollamaHttpsAppStep: 'אם אתה משתמש באפליקציית Ollama (אייקון בשורת התפריטים) — הרץ פעם אחת את הפקודה, אז Quit + פתיחה מחדש של Ollama:',
+    ollamaHttpsTerminalStep: 'אם אתה מריץ ידנית בטרמינל:',
+    ollamaHttpsMultipleNote: 'לכמה origin: הפרד בפסיקים, למשל https://example.com,http://localhost:3000',
     ollamaUrl: 'Ollama URL',
     ollamaModelName: 'שם המודל',
     language: 'שפה',
