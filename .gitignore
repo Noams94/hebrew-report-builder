@@ -25,3 +25,4 @@ dist-ssr
 
 # Claude Code / preview tooling
 .claude/
+.vercel

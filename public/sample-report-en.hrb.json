@@ -1,0 +1,246 @@
+{
+  "schema": "hebrew-report-builder",
+  "version": 3,
+  "exportedAt": "2026-04-22T00:00:00.000Z",
+  "report": {
+    "id": "sample-report-en-q1-2026",
+    "title": "US Customer Experience Report — Q1 2026",
+    "lang": "en",
+    "theme": {
+      "accentColor": "#1d4ed8",
+      "headingFont": "Frank Ruhl Libre",
+      "bodyFont": "Heebo"
+    },
+    "createdAt": 1745193600000,
+    "updatedAt": 1745193600000,
+    "blocks": [
+      {
+        "id": "blk-cover",
+        "type": "cover",
+        "data": {
+          "useReportTitle": true,
+          "overrideTitle": "",
+          "subtitle": "Quarterly analysis of customer experience in the US market",
+          "client": "Fiverr Research Team",
+          "date": "April 2026",
+          "useThemeLogo": true,
+          "logo": null
+        }
+      },
+      {
+        "id": "blk-h-summary",
+        "type": "heading",
+        "data": { "level": 1, "text": "Executive summary" }
+      },
+      {
+        "id": "blk-summary-text",
+        "type": "text",
+        "data": {
+          "markdown": "In Q1 2026 we ran a comprehensive survey with **1,482 active US customers**. The overall satisfaction score rose from 76 to **83** (out of 100), an improvement of 9.2% versus Q4 2025.\n\nThe headline finding: *strong gains on the East and West coasts*, alongside a small dip in the Mountain region. The regional gap warrants attention in Q2."
+        }
+      },
+      {
+        "id": "blk-div-1",
+        "type": "divider",
+        "data": {}
+      },
+      {
+        "id": "blk-h-method",
+        "type": "heading",
+        "data": { "level": 2, "text": "Methodology" }
+      },
+      {
+        "id": "blk-method-text",
+        "type": "text",
+        "data": {
+          "markdown": "- **Sampling method:** random stratified sampling by US census region\n- **Instrument:** online questionnaire, 18 items\n- **Respondents:** N = 1,482\n- **Response rate:** 38%\n- **Collection period:** January 15 – March 28, 2026"
+        }
+      },
+      {
+        "id": "blk-h-profile",
+        "type": "heading",
+        "data": { "level": 2, "text": "Respondent profile" }
+      },
+      {
+        "id": "blk-profile-table",
+        "type": "table",
+        "data": {
+          "headers": ["Group", "N", "Share"],
+          "rows": [
+            ["Men", "698", "47.1%"],
+            ["Women", "762", "51.4%"],
+            ["Non-binary / other", "22", "1.5%"],
+            ["Age 18-24", "201", "13.6%"],
+            ["Age 25-34", "562", "37.9%"],
+            ["Age 35-44", "451", "30.4%"],
+            ["Age 45+", "268", "18.1%"],
+            ["New customers (<6 months)", "364", "24.6%"],
+            ["Returning customers (6+ months)", "1,118", "75.4%"]
+          ]
+        }
+      },
+      {
+        "id": "blk-h-map",
+        "type": "heading",
+        "data": { "level": 2, "text": "Satisfaction by major metro" }
+      },
+      {
+        "id": "blk-map",
+        "type": "map",
+        "data": {
+          "title": "Mean score by metro area (0-100)",
+          "center": [39.5, -98.35],
+          "zoom": 4,
+          "colorByValue": true,
+          "clickToAdd": false,
+          "points": [
+            { "id": "p1", "lat": 40.7128, "lng": -74.0060, "label": "New York", "value": 87 },
+            { "id": "p2", "lat": 34.0522, "lng": -118.2437, "label": "Los Angeles", "value": 85 },
+            { "id": "p3", "lat": 41.8781, "lng": -87.6298, "label": "Chicago", "value": 82 },
+            { "id": "p4", "lat": 29.7604, "lng": -95.3698, "label": "Houston", "value": 81 },
+            { "id": "p5", "lat": 33.4484, "lng": -112.0740, "label": "Phoenix", "value": 79 },
+            { "id": "p6", "lat": 39.9526, "lng": -75.1652, "label": "Philadelphia", "value": 84 },
+            { "id": "p7", "lat": 37.7749, "lng": -122.4194, "label": "San Francisco", "value": 88 },
+            { "id": "p8", "lat": 47.6062, "lng": -122.3321, "label": "Seattle", "value": 86 },
+            { "id": "p9", "lat": 42.3601, "lng": -71.0589, "label": "Boston", "value": 85 },
+            { "id": "p10", "lat": 33.7490, "lng": -84.3880, "label": "Atlanta", "value": 80 },
+            { "id": "p11", "lat": 39.7392, "lng": -104.9903, "label": "Denver", "value": 78 },
+            { "id": "p12", "lat": 25.7617, "lng": -80.1918, "label": "Miami", "value": 83 }
+          ]
+        }
+      },
+      {
+        "id": "blk-map-insight",
+        "type": "text",
+        "data": {
+          "markdown": "**Takeaway:** coastal metros (San Francisco, New York, Seattle, Boston) lead at 85-88. Denver and Phoenix sit at the lower end (78-79). The ~10-point gap points to regional differences in support availability and onboarding experience."
+        }
+      },
+      {
+        "id": "blk-h-likert",
+        "type": "heading",
+        "data": { "level": 2, "text": "Customer experience — 5 dimensions" }
+      },
+      {
+        "id": "blk-likert",
+        "type": "likert",
+        "data": {
+          "scale": 5,
+          "title": "Response distribution by dimension (N=1,482)",
+          "questions": [
+            {
+              "text": "Ease of use of the platform",
+              "responses": [48, 103, 187, 608, 536]
+            },
+            {
+              "text": "Quality of service received",
+              "responses": [79, 134, 231, 579, 459]
+            },
+            {
+              "text": "Value for money",
+              "responses": [112, 221, 352, 489, 308]
+            },
+            {
+              "text": "Speed and availability of support",
+              "responses": [146, 239, 370, 462, 265]
+            },
+            {
+              "text": "Likelihood to recommend to a friend",
+              "responses": [68, 121, 221, 621, 451]
+            }
+          ]
+        }
+      },
+      {
+        "id": "blk-h-nps",
+        "type": "heading",
+        "data": { "level": 2, "text": "NPS score — descriptive statistics" }
+      },
+      {
+        "id": "blk-stats",
+        "type": "stats",
+        "data": {
+          "source": {
+            "fileName": "nps_scores.csv",
+            "sheets": ["Sheet1"],
+            "data": {
+              "Sheet1": {
+                "headers": ["Respondent", "NPS"],
+                "rows": [
+                  ["R1", "9"], ["R2", "10"], ["R3", "7"], ["R4", "8"],
+                  ["R5", "9"], ["R6", "6"], ["R7", "10"], ["R8", "8"],
+                  ["R9", "7"], ["R10", "9"], ["R11", "10"], ["R12", "5"],
+                  ["R13", "8"], ["R14", "9"], ["R15", "7"], ["R16", "10"],
+                  ["R17", "9"], ["R18", "8"], ["R19", "6"], ["R20", "10"],
+                  ["R21", "8"], ["R22", "9"], ["R23", "7"], ["R24", "9"],
+                  ["R25", "10"], ["R26", "8"], ["R27", "6"], ["R28", "9"],
+                  ["R29", "7"], ["R30", "10"], ["R31", "8"], ["R32", "9"],
+                  ["R33", "4"], ["R34", "10"], ["R35", "9"], ["R36", "8"],
+                  ["R37", "7"], ["R38", "9"], ["R39", "10"], ["R40", "8"]
+                ]
+              }
+            }
+          },
+          "sheet": "Sheet1",
+          "column": "NPS",
+          "metrics": ["n", "mean", "median", "std", "min", "max"],
+          "title": "NPS score distribution (sample of 40 out of 1,482)"
+        }
+      },
+      {
+        "id": "blk-h-trend",
+        "type": "heading",
+        "data": { "level": 2, "text": "Monthly trends" }
+      },
+      {
+        "id": "blk-trend",
+        "type": "chart",
+        "data": {
+          "source": {
+            "fileName": "monthly_trends.csv",
+            "sheets": ["Sheet1"],
+            "data": {
+              "Sheet1": {
+                "headers": ["Month", "Satisfaction", "Recommendation rate"],
+                "rows": [
+                  ["January", "76", "59"],
+                  ["February", "80", "64"],
+                  ["March", "83", "69"]
+                ]
+              }
+            }
+          },
+          "sheet": "Sheet1",
+          "xColumn": "Month",
+          "yColumns": ["Satisfaction", "Recommendation rate"],
+          "chartType": "bar",
+          "title": "Satisfaction and recommendation rate by month"
+        }
+      },
+      {
+        "id": "blk-h-insights",
+        "type": "heading",
+        "data": { "level": 2, "text": "Key insights" }
+      },
+      {
+        "id": "blk-insights",
+        "type": "text",
+        "data": {
+          "markdown": "- **Consistent upward trend:** a 7-point rise between January and March in the satisfaction score.\n- **Regional gap:** coastal metros at 85+, while the Mountain region sits in the 78-79 range.\n- **Strength:** **ease of use** is the top-rated dimension (77% *agree* or *strongly agree*).\n- **Area to improve:** **value for money** — only 54% rated it *agree* or above.\n- **Support availability** still shows high variance. Worth examining coverage across time zones."
+        }
+      },
+      {
+        "id": "blk-h-recs",
+        "type": "heading",
+        "data": { "level": 2, "text": "Recommendations" }
+      },
+      {
+        "id": "blk-recs",
+        "type": "text",
+        "data": {
+          "markdown": "1. Launch a regional pilot in the Mountain region — tailored onboarding and tighter support SLAs.\n2. Revisit the US pricing structure, especially for new customers (<6 months).\n3. Repeat the survey in Q2 with the same methodology to measure the impact of the interventions.\n4. Run 20-30 qualitative interviews with respondents who scored ≤5 to understand drivers of low satisfaction."
+        }
+      }
+    ]
+  }
+}

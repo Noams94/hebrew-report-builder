@@ -1,10 +1,11 @@
 {
   "schema": "hebrew-report-builder",
-  "version": 2,
-  "exportedAt": "2026-04-21T00:00:00.000Z",
+  "version": 3,
+  "exportedAt": "2026-04-22T00:00:00.000Z",
   "report": {
-    "id": "sample-report-q1-2026",
+    "id": "sample-report-he-q1-2026",
     "title": "שביעות רצון משתמשים ישראלים — Q1 2026",
+    "lang": "he",
     "theme": {
       "accentColor": "#0f766e",
       "headingFont": "Frank Ruhl Libre",
