@@ -16,15 +16,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { useT, useLang, isRtl } from '../i18n'
-
-export const CHART_COLORS = [
-  '#1e3a5f',
-  '#7c2d12',
-  '#556b2f',
-  '#b45309',
-  '#4b5563',
-  '#0f766e',
-]
+import { CHART_COLORS } from '../lib/chartColors'
 
 const MARGIN = { top: 10, right: 20, left: 20, bottom: 10 }
 

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import BlockWrapper from './BlockWrapper'
@@ -10,11 +11,13 @@ import TableBlock from './blocks/TableBlock'
 import DividerBlock from './blocks/DividerBlock'
 import LikertBlock from './blocks/LikertBlock'
 import StatsBlock from './blocks/StatsBlock'
-import MapBlock from './blocks/MapBlock'
 import CoverBlock from './blocks/CoverBlock'
 import NpsBlock from './blocks/NpsBlock'
 import { useReportStore } from '../store/reportStore'
 import { useT } from '../i18n'
+
+// Leaflet is heavy and most reports have no map — load it only when needed
+const MapBlock = lazy(() => import('./blocks/MapBlock'))
 
 const BLOCK_COMPONENTS = {
   heading: HeadingBlock,
@@ -64,7 +67,9 @@ export default function SortableBlock({ block }) {
         t={t.errorBoundary}
         onDelete={() => deleteBlock(block.id)}
       >
-        <Block block={block} />
+        <Suspense fallback={null}>
+          <Block block={block} />
+        </Suspense>
       </BlockErrorBoundary>
     </BlockWrapper>
   )

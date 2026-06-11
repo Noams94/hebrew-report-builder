@@ -16,7 +16,6 @@ import { useReportStore } from '../store/reportStore'
 import { useHistoryStore } from '../store/historyStore'
 import { downloadReport, printReport } from '../lib/export'
 import { downloadReportJSON } from '../lib/reportFile'
-import { exportReportDOCX } from '../lib/docxExport'
 import ImportDialog from './ImportDialog'
 import ThemePanel from './ThemePanel'
 import SettingsPanel from './SettingsPanel'
@@ -60,8 +59,12 @@ export default function Toolbar() {
   const langMenuRef = useRef(null)
 
   useEffect(() => {
-    setLastSaved(new Date())
-  }, [title, blocks])
+    return useReportStore.subscribe((state, prev) => {
+      if (state.title !== prev.title || state.blocks !== prev.blocks) {
+        setLastSaved(new Date())
+      }
+    })
+  }, [])
 
   useEffect(() => {
     if (!exportOpen) return
@@ -108,6 +111,7 @@ export default function Toolbar() {
 
   const handleExportDOCX = async () => {
     try {
+      const { exportReportDOCX } = await import('../lib/docxExport')
       await exportReportDOCX(title, blocks, lang)
     } catch (err) {
       alert(t.toolbar.exportDocxError + (err.message || t.common.unknown))

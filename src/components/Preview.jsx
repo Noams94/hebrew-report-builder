@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { useReportStore } from '../store/reportStore'
 import { parseMarkdown } from '../lib/markdown'
 import { slugify } from '../lib/slugify'
@@ -9,9 +9,11 @@ import { CoverPreview } from './blocks/CoverBlock'
 import { NpsView } from './blocks/NpsBlock'
 import { computeStats } from '../lib/stats'
 import { computeNps } from '../lib/nps'
-import MapPreview from './MapPreview'
 import BlockErrorBoundary from './BlockErrorBoundary'
 import { useT, useLang, useDir, isRtl } from '../i18n'
+
+// Leaflet is heavy and most reports have no map — load it only when needed
+const MapPreview = lazy(() => import('./MapPreview'))
 
 function defaultHeadingFont(lang) {
   return lang === 'en' ? 'Merriweather' : 'Frank Ruhl Libre'
@@ -260,7 +262,11 @@ function PreviewBlock({ block, headingIdsById, theme = {}, reportTitle = '', t, 
   }
 
   if (type === 'map') {
-    return <MapPreview data={data} lang={lang} />
+    return (
+      <Suspense fallback={null}>
+        <MapPreview data={data} lang={lang} />
+      </Suspense>
+    )
   }
 
   if (type === 'nps') {

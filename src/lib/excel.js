@@ -1,6 +1,5 @@
-import * as XLSX from 'xlsx'
-
 export async function parseExcel(file) {
+  const XLSX = await import('xlsx')
   const buffer = await file.arrayBuffer()
   const workbook = XLSX.read(buffer, { type: 'array' })
   const sheets = workbook.SheetNames

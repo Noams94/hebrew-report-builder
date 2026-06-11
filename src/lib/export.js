@@ -1,4 +1,5 @@
 import { parseMarkdown } from './markdown'
+import { CHART_COLORS } from './chartColors'
 import { slugify } from './slugify'
 import { computeStats, formatMetric, getMetricLabels } from './stats'
 import { computeNps, NPS_COLORS, npsScoreColor } from './nps'
@@ -134,15 +135,6 @@ const buildDocStyles = (theme = {}, lang = 'he') => {
   }
 `
 }
-
-const CHART_COLORS = [
-  '#1e3a5f',
-  '#7c2d12',
-  '#556b2f',
-  '#b45309',
-  '#4b5563',
-  '#0f766e',
-]
 
 const renderChart = (block) => {
   const { source, sheet, xColumn, yColumns, title, chartType, importedSvg } =
