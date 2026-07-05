@@ -238,8 +238,8 @@ export default {
     aiModeOllama: 'Ollama (לוקלי)',
     aiModeOllamaDesc: 'פרטיות מלאה. דורש Ollama רץ במכונה.',
     claudeWarning:
-      'המפתח נשמר ב-localStorage במחשב בלבד. לא להשתמש ב-API key של production באפליקציית דפדפן. לשימוש אישי בלבד.',
-    apiKey: 'API Key',
+      'כברירת מחדל הבקשות עוברות דרך שרת האתר — אין צורך במפתח. הזנת מפתח אישי תשלח בקשות ישירות מהדפדפן (המפתח נשמר ב-localStorage במחשב בלבד; לשימוש אישי בלבד).',
+    apiKey: 'API Key (אופציונלי)',
     model: 'מודל',
     haiku: 'Haiku 4.5 (מהיר וזול)',
     sonnet: 'Sonnet 4.6 (מאוזן)',

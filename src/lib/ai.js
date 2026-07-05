@@ -32,6 +32,7 @@ const LOCALIZED = {
     errors: {
       aiOff: 'AI כבוי. הפעל בהגדרות.',
       noKey: 'חסר API key של Claude',
+      proxyUnavailable: 'שירות ה-AI של האתר אינו זמין כרגע. אפשר להזין API key אישי בהגדרות.',
       empty: 'תגובה ריקה מ-Claude',
       ollamaUnreachable: (url) =>
         `לא הצלחתי להתחבר ל-Ollama ב-${url}. ודא ש-\`ollama serve\` רץ.`,
@@ -75,6 +76,7 @@ const LOCALIZED = {
     errors: {
       aiOff: 'AI is off. Enable it in Settings.',
       noKey: 'Missing Claude API key',
+      proxyUnavailable: "The site's AI service is currently unavailable. You can enter a personal API key in Settings.",
       empty: 'Empty response from Claude',
       ollamaUnreachable: (url) =>
         `Couldn't connect to Ollama at ${url}. Make sure \`ollama serve\` is running.`,
@@ -113,9 +115,29 @@ export const POLISH_LABELS = new Proxy(
   },
 )
 
+// Server-side proxy — the deployed site holds the API key in a Vercel env var,
+// so users don't need to paste a key. A user-supplied key (fully local usage)
+// still takes the direct-call path below.
+async function callClaudeProxy({ model, systemPrompt, userPrompt }) {
+  const L = localized()
+  const res = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, systemPrompt, userPrompt }),
+  })
+  if (!res.ok) {
+    if (res.status === 503) throw new Error(L.errors.proxyUnavailable)
+    const data = await res.json().catch(() => null)
+    throw new Error(`Claude API ${res.status}: ${data?.error ?? ''}`)
+  }
+  const data = await res.json()
+  if (!data?.text) throw new Error(L.errors.empty)
+  return data.text
+}
+
 async function callClaude({ apiKey, model, systemPrompt, userPrompt }) {
   const L = localized()
-  if (!apiKey) throw new Error(L.errors.noKey)
+  if (!apiKey) return callClaudeProxy({ model, systemPrompt, userPrompt })
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {

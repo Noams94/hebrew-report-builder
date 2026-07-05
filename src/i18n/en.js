@@ -238,8 +238,8 @@ export default {
     aiModeOllama: 'Ollama (local)',
     aiModeOllamaDesc: 'Fully private. Requires Ollama running on this machine.',
     claudeWarning:
-      'The key is stored in localStorage on this computer only. Do not use a production API key in a browser app. For personal use only.',
-    apiKey: 'API Key',
+      "By default requests go through the site's server — no key needed. Entering a personal key sends requests directly from the browser (stored in localStorage on this computer only; for personal use only).",
+    apiKey: 'API Key (optional)',
     model: 'Model',
     haiku: 'Haiku 4.5 (fast and cheap)',
     sonnet: 'Sonnet 4.6 (balanced)',
